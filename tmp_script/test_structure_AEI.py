@@ -4,10 +4,10 @@ from network.AEI_Net import *
 import time
 
 device = torch.device('cuda:0')
-torch.backends.cudnn.benchmar = True
+print(torch.backends.cudnn.benchmark)
+# torch.backends.cudnn.benchmark = True
 
-net = AEI_Net(256)
-net.eval().to(device)
+net = (AEI_Net(256).cuda())
 
 batch_size = 4
 
