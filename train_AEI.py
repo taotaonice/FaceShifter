@@ -7,11 +7,13 @@ from face_modules.model import Backbone, Arcface, MobileFaceNet, Am_softmax, l2_
 import torch.nn.functional as F
 import torch
 import time
+import torchvision
+import cv2
 
 
-batch_size = 2
-lr_G = 1e-4
-lr_D = 1e-4
+batch_size = 16
+lr_G = 3e-3
+lr_D = 1e-3
 max_epoch = 2000
 show_step = 10
 save_epoch = 1
@@ -37,9 +39,26 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worker
 MSE = torch.nn.MSELoss()
 L1 = torch.nn.L1Loss()
 
+
+def get_numpy_image(X):
+    X = torchvision.utils.make_grid(X.detach().cpu(), nrow=batch_size).numpy() * 0.5 + 0.5
+    X = np.swapaxes(np.swapaxes(X, 0, 1), 1, 2)[:, :, ::-1]*255
+    return X
+
+
+def make_image(Xs, Xt, Y):
+    Xs = get_numpy_image(Xs)
+    Xt = get_numpy_image(Xt)
+    Y = get_numpy_image(Y)
+    return np.concatenate((Xs, Xt, Y), axis=0)
+
+
+print(torch.backends.cudnn.benchmark)
+torch.backends.cudnn.benchmark = True
 for epoch in range(max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
+        print(f'{iteration} / {len(dataloader)}')
         start_time = time.time()
         Xs, Xt, embed, same_person = data
         Xs = Xs.to(device)
@@ -55,7 +74,7 @@ for epoch in range(max_epoch):
         L_adv = L1(score, torch.ones_like(score))
 
         ZY = arcface(F.interpolate(Y, [112, 112], mode='bilinear', align_corners=True))
-        L_id = 1 - torch.cosine_similarity(embed, ZY, dim=1).mean()
+        L_id = (1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
         Y_attr = G.get_attr(Y)
         L_attr = 0
@@ -83,4 +102,11 @@ for epoch in range(max_epoch):
         lossD.backward()
         opt_D.step()
         batch_time = time.time() - start_time
+        image = make_image(Xs, Xt, Y)
+        cv2.imwrite('./gen_images/latest.jpg', image)
+
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
+    torch.save(G.state_dict(), './saved_models/G_%06d.pth')
+    torch.save(D.state_dict(), './saved_models/D_%06d.pth')
+
+

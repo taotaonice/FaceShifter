@@ -45,7 +45,7 @@ class FaceEmbed(TensorDataset):
             Xt = self.transforms(Image.fromarray(Xt))
             same_person = 0
         else:
-            Xt = Xs
+            Xt = Xs.clone()
             same_person = 1
         return Xs, Xt, embed, same_person
 
