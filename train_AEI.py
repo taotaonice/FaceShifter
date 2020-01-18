@@ -11,15 +11,15 @@ import torchvision
 import cv2
 
 
-batch_size = 16
-lr_G = 3e-3
-lr_D = 1e-3
+batch_size = 6
+lr_G = 1e-4
+lr_D = 1e-4
 max_epoch = 2000
 show_step = 10
 save_epoch = 1
 model_save_path = './saved_models/'
 
-device = torch.device('cpu')
+device = torch.device('cuda')
 # torch.set_num_threads(12)
 
 G = AEI_Net(c_id=512).to(device)
@@ -32,7 +32,7 @@ arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_locat
 opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
 
-dataset = FaceEmbed(['/home/taotao/Downloads/celeb-aligned-256/'])
+dataset = FaceEmbed(['../celeb-aligned-256/'])
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True)
 
 
@@ -106,7 +106,7 @@ for epoch in range(max_epoch):
         cv2.imwrite('./gen_images/latest.jpg', image)
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
-    torch.save(G.state_dict(), './saved_models/G_%06d.pth')
-    torch.save(D.state_dict(), './saved_models/D_%06d.pth')
+    torch.save(G.state_dict(), './saved_models/G_%06d.pth'%epoch)
+    torch.save(D.state_dict(), './saved_models/D_%06d.pth'%epoch)
 
 
