@@ -39,20 +39,20 @@ class AADLayer(nn.Module):
 
 
 class AAD_ResBlk(nn.Module):
-    def __init__(self, cin, cout, c_attr):
+    def __init__(self, cin, cout, c_attr, c_id=256):
         super(AAD_ResBlk, self).__init__()
         self.cin = cin
         self.cout = cout
 
-        self.AAD1 = AADLayer(cin, c_attr)
+        self.AAD1 = AADLayer(cin, c_attr, c_id)
         self.conv1 = nn.Conv2d(cin, cin, kernel_size=3, stride=1, padding=1, bias=False)
         self.relu1 = nn.ReLU(inplace=True)
 
-        self.AAD2 = AADLayer(cin, c_attr)
+        self.AAD2 = AADLayer(cin, c_attr, c_id)
         self.conv2 = nn.Conv2d(cin, cout, kernel_size=3, stride=1, padding=1, bias=False)
         self.relu2 = nn.ReLU(inplace=True)
 
-        self.AAD3 = AADLayer(cin, c_attr)
+        self.AAD3 = AADLayer(cin, c_attr, c_id)
         self.conv3 = nn.Conv2d(cin, cout, kernel_size=3, stride=1, padding=1, bias=False)
         self.relu3 = nn.ReLU(inplace=True)
 
