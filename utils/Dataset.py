@@ -9,10 +9,11 @@ import cv2
 
 
 class FaceEmbed(TensorDataset):
-    def __init__(self, data_path_list):
+    def __init__(self, data_path_list, same_prob=0.5):
         datasets = []
         embeds = []
         self.N = []
+        self.same_prob = same_prob
         for data_path in data_path_list:
             image_list = glob.glob(f'{data_path}/*.*g')
             datasets.append(image_list)
@@ -39,7 +40,7 @@ class FaceEmbed(TensorDataset):
         Xs = cv2.imread(image_path)[:, :, ::-1]
         Xs = self.transforms(Image.fromarray(Xs))
 
-        if random.random() < 0.9:
+        if random.random() < self.same_prob:
             image_path = random.choice(self.datasets[random.randint(0, len(self.datasets)-1)])
             Xt = cv2.imread(image_path)[:, :, ::-1]
             Xt = self.transforms(Image.fromarray(Xt))
