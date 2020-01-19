@@ -36,8 +36,8 @@ arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_locat
 opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
 try:
-    G.load_state_dict(torch.load('./saved_models/G_latest.pth', map_location=torch.device('cpu')))
-    D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')))
+    G.load_state_dict(torch.load('./saved_models/G_latest.pth', map_location=torch.device('cpu')), strict=False)
+    D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')), strict=False)
 except Exception as e:
     print(e)
 #G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)

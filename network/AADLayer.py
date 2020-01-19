@@ -15,7 +15,7 @@ class AADLayer(nn.Module):
         self.fc2 = nn.Linear(c_id, c_x)
         self.norm = nn.InstanceNorm2d(c_x)
 
-        self.conv_h = nn.Conv2d(c_x, c_x, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv_h = nn.Conv2d(c_x, 1, kernel_size=3, stride=1, padding=1, bias=False)
 
     def forward(self, h_in, z_attr, z_id):
         # h_in cxnxn

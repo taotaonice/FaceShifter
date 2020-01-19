@@ -23,7 +23,7 @@ x = torch.zeros([batch_size, 3, 256, 256]).to(device)
 
 while True:
     st = time.time()
-    y = net(x, z_id)
+    y = net(x, z_id)[0]
     loss = y.mean()
     with amp.scale_loss(loss, optm) as scaled_loss:
         scaled_loss.backward()
