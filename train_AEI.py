@@ -55,9 +55,9 @@ L1 = torch.nn.L1Loss()
 
 def hinge_loss(X, positive=True):
     if positive:
-        return torch.relu(1-X)
+        return torch.relu(1-X).mean()
     else:
-        return torch.relu(X+1)
+        return torch.relu(X+1).mean()
 
 
 def get_numpy_image(X):
