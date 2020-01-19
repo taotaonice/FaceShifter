@@ -9,15 +9,17 @@ import torch
 import time
 import torchvision
 import cv2
+from apex import amp
 
 
 batch_size = 6
 lr_G = 1e-4
-lr_D = 1e-4
+lr_D = 1e-3
 max_epoch = 2000
 show_step = 10
 save_epoch = 1
 model_save_path = './saved_models/'
+optim_level = 'O2'
 
 device = torch.device('cuda')
 # torch.set_num_threads(12)
@@ -31,6 +33,13 @@ arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_locat
 
 opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
+try:
+    G.load_state_dict(torch.load('./saved_models/G_000006.pth', map_location=torch.device('cpu')))
+    D.load_state_dict(torch.load('./saved_models/D_000006.pth', map_location=torch.device('cpu')))
+except Exception as e:
+    print(e)
+#G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
+#D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
 
 dataset = FaceEmbed(['../celeb-aligned-256/'])
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True)
@@ -55,7 +64,7 @@ def make_image(Xs, Xt, Y):
 
 print(torch.backends.cudnn.benchmark)
 torch.backends.cudnn.benchmark = True
-for epoch in range(max_epoch):
+for epoch in range(7, max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
         print(f'{iteration} / {len(dataloader)}')
@@ -85,6 +94,8 @@ for epoch in range(max_epoch):
         L_rec = torch.mean(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person)
 
         lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
+        # with amp.scale_loss(lossG, opt_G) as scaled_loss:
+            # scaled_loss.backward()
 
         lossG.backward()
         opt_G.step()
@@ -99,6 +110,8 @@ for epoch in range(max_epoch):
                      0.5*(L1(true_score1, torch.ones_like(true_score1))
                           + L1(true_score2, torch.ones_like(true_score2))))
 
+        # with amp.scale_loss(lossD, opt_D) as scaled_loss:
+            # scaled_loss.backward()
         lossD.backward()
         opt_D.step()
         batch_time = time.time() - start_time

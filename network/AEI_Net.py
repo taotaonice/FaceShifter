@@ -108,8 +108,8 @@ class AEI_Net(nn.Module):
         return Y, attr
 
     def get_attr(self, X):
-        with torch.no_grad():
-            return self.encoder(X)
+        #with torch.no_grad():
+        return self.encoder(X)
 
 
 
