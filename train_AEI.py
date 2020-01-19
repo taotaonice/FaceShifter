@@ -33,7 +33,7 @@ D.train()
 
 arcface = Backbone(50, 0.6, 'ir_se').to(device)
 arcface.eval()
-arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_location=device))
+arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_location=device), strict=False)
 
 opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
