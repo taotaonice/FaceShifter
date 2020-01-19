@@ -53,6 +53,13 @@ MSE = torch.nn.MSELoss()
 L1 = torch.nn.L1Loss()
 
 
+def hinge_loss(X, positive=True):
+    if positive:
+        return torch.relu(1-X)
+    else:
+        return torch.relu(X+1)
+
+
 def get_numpy_image(X):
     X = torchvision.utils.make_grid(X.detach().cpu(), nrow=batch_size).numpy() * 0.5 + 0.5
     X = X.transpose([1,2,0])*255
@@ -86,8 +93,11 @@ for epoch in range(0, max_epoch):
         opt_G.zero_grad()
         Y, Xt_attr = G(Xt, embed)
 
-        score = D(Y)[-1][0]
-        L_adv = L1(score, torch.ones_like(score))
+        Di = D(Y)#[-1][0]
+        L_adv = 0
+        # L1(score, torch.ones_like(score))
+        for di in Di:
+            L_adv += hinge_loss(di[0], True)
 
         ZY = arcface(F.interpolate(Y, [112, 112], mode='bilinear', align_corners=True))
         L_id = (1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
@@ -109,12 +119,18 @@ for epoch in range(0, max_epoch):
 
         # train D
         opt_D.zero_grad()
-        fake_score = D(Y.detach())[-1][0]
-        true_score1 = D(Xs)[-1][0]
+        fake_D = D(Y.detach())
+        loss_fake = 0
+        for di in fake_D:
+            loss_fake += hinge_loss(di[0], False)
+
+        true_D = D(Xs)
+        loss_true = 0
+        for di in true_D:
+            loss_true += hinge_loss(di[0], True)
         # true_score2 = D(Xt)[-1][0]
 
-        lossD = 0.5*(L1(torch.zeros_like(fake_score), fake_score) +
-                     L1(true_score1, torch.ones_like(true_score1)))
+        lossD = 0.5*(loss_true + loss_fake)
                           
         with amp.scale_loss(lossD, opt_D) as scaled_loss:
             scaled_loss.backward()
