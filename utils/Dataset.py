@@ -9,7 +9,7 @@ import cv2
 
 
 class FaceEmbed(TensorDataset):
-    def __init__(self, data_path_list, same_prob=0.5):
+    def __init__(self, data_path_list, same_prob=0.05):
         datasets = []
         embeds = []
         self.N = []

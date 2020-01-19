@@ -16,7 +16,7 @@ import visdom
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
 batch_size = 16
 lr_G = 1e-4
-lr_D = 1e-3
+lr_D = 3e-4
 max_epoch = 2000
 show_step = 10
 save_epoch = 1
@@ -66,7 +66,7 @@ def make_image(Xs, Xt, Y):
 
 
 print(torch.backends.cudnn.benchmark)
-torch.backends.cudnn.benchmark = True
+#torch.backends.cudnn.benchmark = True
 for epoch in range(0, max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
@@ -110,8 +110,8 @@ for epoch in range(0, max_epoch):
         true_score2 = D(Xt)[-1][0]
 
         lossD = 0.5*(L1(torch.zeros_like(fake_score), fake_score) +
-                     0.5*(L1(true_score1, torch.ones_like(true_score1))
-                          + L1(true_score2, torch.ones_like(true_score2))))
+                     L1(true_score1, torch.ones_like(true_score1)))
+                          
 
         with amp.scale_loss(lossD, opt_D) as scaled_loss:
             scaled_loss.backward()
