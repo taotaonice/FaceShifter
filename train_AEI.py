@@ -14,7 +14,7 @@ import visdom
 
 
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
-batch_size = 12
+batch_size = 16
 lr_G = 1e-4
 lr_D = 1e-3
 max_epoch = 2000
@@ -44,7 +44,7 @@ except Exception as e:
 #D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
 
 dataset = FaceEmbed(['../celeb-aligned-256/'])
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
 
 MSE = torch.nn.MSELoss()
@@ -117,9 +117,10 @@ for epoch in range(0, max_epoch):
         lossD.backward()
         opt_D.step()
         batch_time = time.time() - start_time
-        image = make_image(Xs, Xt, Y)
-        vis.image(image, opts={'title': 'result'}, win='result')
-        cv2.imwrite('./gen_images/latest.jpg', image[:,:,::-1])
+        if iteration % show_step == 0:
+            image = make_image(Xs, Xt, Y)
+            vis.image(image, opts={'title': 'result'}, win='result')
+            cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0])[:,:,::-1])
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
     torch.save(G.state_dict(), './saved_models/G_latest.pth')
