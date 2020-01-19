@@ -54,6 +54,7 @@ L1 = torch.nn.L1Loss()
 def get_numpy_image(X):
     X = torchvision.utils.make_grid(X.detach().cpu(), nrow=batch_size).numpy() * 0.5 + 0.5
     X = X.transpose([1,2,0])*255
+    np.clip(X, 0, 255).astype(np.uint8)
     return X
 
 
