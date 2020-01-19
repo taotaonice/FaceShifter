@@ -53,7 +53,7 @@ L1 = torch.nn.L1Loss()
 
 def get_numpy_image(X):
     X = torchvision.utils.make_grid(X.detach().cpu(), nrow=batch_size).numpy() * 0.5 + 0.5
-    X = np.swapaxes(np.swapaxes(X, 0, 1), 1, 2)[:, :, ::-1]*255
+    X = X.transpose([1,2,0])*255
     return X
 
 
@@ -61,7 +61,7 @@ def make_image(Xs, Xt, Y):
     Xs = get_numpy_image(Xs)
     Xt = get_numpy_image(Xt)
     Y = get_numpy_image(Y)
-    return np.concatenate((Xs, Xt, Y), axis=0)
+    return np.concatenate((Xs, Xt, Y), axis=0).transpose([2, 0, 1])
 
 
 print(torch.backends.cudnn.benchmark)
@@ -119,7 +119,7 @@ for epoch in range(0, max_epoch):
         batch_time = time.time() - start_time
         image = make_image(Xs, Xt, Y)
         vis.image(image, opts={'title': 'result'}, win='result')
-        cv2.imwrite('./gen_images/latest.jpg', image)
+        cv2.imwrite('./gen_images/latest.jpg', image[:,:,::-1])
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
     torch.save(G.state_dict(), './saved_models/G_latest.pth')
