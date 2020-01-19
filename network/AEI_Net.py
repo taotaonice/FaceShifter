@@ -93,7 +93,7 @@ class AADGenerator(nn.Module):
         m7 = F.interpolate(self.AADBlk6(m6, z_attr[5], z_id), scale_factor=2, mode='bilinear', align_corners=True)
         m8 = F.interpolate(self.AADBlk7(m7, z_attr[6], z_id), scale_factor=2, mode='bilinear', align_corners=True)
         y = self.AADBlk8(m8, z_attr[7], z_id)
-        return y
+        return torch.tanh(y)
 
 
 class AEI_Net(nn.Module):
