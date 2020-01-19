@@ -77,7 +77,9 @@ for epoch in range(0, max_epoch):
         Xs, Xt, embed, same_person = data
         Xs = Xs.to(device)
         Xt = Xt.to(device)
-        embed = embed.to(device)
+        # embed = embed.to(device)
+        with torch.no_grad():
+            embed = arcface(F.interpolate(Xs, [112, 112], mode='bilinear', align_corners=True))
         same_person = same_person.to(device)
 
         # train G
