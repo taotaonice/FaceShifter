@@ -9,7 +9,7 @@ import torch
 import time
 import torchvision
 import cv2
-# from apex import amp
+from apex import amp
 import visdom
 
 
@@ -21,7 +21,7 @@ max_epoch = 2000
 show_step = 10
 save_epoch = 1
 model_save_path = './saved_models/'
-optim_level = 'O2'
+optim_level = 'O1'
 
 device = torch.device('cuda')
 # torch.set_num_threads(12)
@@ -40,8 +40,8 @@ try:
     D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')), strict=False)
 except Exception as e:
     print(e)
-#G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
-#D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
+G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
+D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
 
 dataset = FaceEmbed(['../celeb-aligned-256/'])
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
@@ -96,10 +96,10 @@ for epoch in range(0, max_epoch):
         L_rec = torch.mean(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person)
 
         lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
-        # with amp.scale_loss(lossG, opt_G) as scaled_loss:
-            # scaled_loss.backward()
+        with amp.scale_loss(lossG, opt_G) as scaled_loss:
+            scaled_loss.backward()
 
-        lossG.backward()
+        # lossG.backward()
         opt_G.step()
 
         # train D
@@ -112,9 +112,9 @@ for epoch in range(0, max_epoch):
                      0.5*(L1(true_score1, torch.ones_like(true_score1))
                           + L1(true_score2, torch.ones_like(true_score2))))
 
-        # with amp.scale_loss(lossD, opt_D) as scaled_loss:
-            # scaled_loss.backward()
-        lossD.backward()
+        with amp.scale_loss(lossD, opt_D) as scaled_loss:
+            scaled_loss.backward()
+        # lossD.backward()
         opt_D.step()
         batch_time = time.time() - start_time
         if iteration % show_step == 0:

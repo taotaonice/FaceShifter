@@ -9,7 +9,7 @@ import cv2
 
 
 class FaceEmbed(TensorDataset):
-    def __init__(self, data_path_list, same_prob=0.5):
+    def __init__(self, data_path_list, same_prob=0.05):
         datasets = []
         embeds = []
         self.N = []
@@ -40,7 +40,7 @@ class FaceEmbed(TensorDataset):
         Xs = cv2.imread(image_path)[:, :, ::-1]
         Xs = self.transforms(Image.fromarray(Xs))
 
-        if random.random() < self.same_prob:
+        if random.random() > self.same_prob:
             image_path = random.choice(self.datasets[random.randint(0, len(self.datasets)-1)])
             Xt = cv2.imread(image_path)[:, :, ::-1]
             Xt = self.transforms(Image.fromarray(Xt))
