@@ -9,9 +9,12 @@ import torch
 import time
 import torchvision
 import cv2
-from apex import amp
+# from apex import amp
+import visdom
 
 
+vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
+vis.images(torch.randn([20, 3, 64, 64]), opts={'title':'title'})
 batch_size = 6
 lr_G = 1e-4
 lr_D = 1e-3
@@ -116,6 +119,7 @@ for epoch in range(7, max_epoch):
         opt_D.step()
         batch_time = time.time() - start_time
         image = make_image(Xs, Xt, Y)
+        vis.image(image, opts={'title': 'result'})
         cv2.imwrite('./gen_images/latest.jpg', image)
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
