@@ -14,7 +14,6 @@ import visdom
 
 
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
-vis.images(torch.randn([20, 3, 64, 64]), opts={'title':'title'})
 batch_size = 6
 lr_G = 1e-4
 lr_D = 1e-3
@@ -37,8 +36,8 @@ arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_locat
 opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
 try:
-    G.load_state_dict(torch.load('./saved_models/G_000006.pth', map_location=torch.device('cpu')))
-    D.load_state_dict(torch.load('./saved_models/D_000006.pth', map_location=torch.device('cpu')))
+    G.load_state_dict(torch.load('./saved_models/G_latest.pth', map_location=torch.device('cpu')))
+    D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')))
 except Exception as e:
     print(e)
 #G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
@@ -67,7 +66,7 @@ def make_image(Xs, Xt, Y):
 
 print(torch.backends.cudnn.benchmark)
 torch.backends.cudnn.benchmark = True
-for epoch in range(7, max_epoch):
+for epoch in range(0, max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
         print(f'{iteration} / {len(dataloader)}')
@@ -119,11 +118,11 @@ for epoch in range(7, max_epoch):
         opt_D.step()
         batch_time = time.time() - start_time
         image = make_image(Xs, Xt, Y)
-        vis.image(image, opts={'title': 'result'})
+        vis.image(image, opts={'title': 'result'}, win='result')
         cv2.imwrite('./gen_images/latest.jpg', image)
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
-    torch.save(G.state_dict(), './saved_models/G_%06d.pth'%epoch)
-    torch.save(D.state_dict(), './saved_models/D_%06d.pth'%epoch)
+    torch.save(G.state_dict(), './saved_models/G_latest.pth')
+    torch.save(D.state_dict(), './saved_models/D_latest.pth')
 
 
