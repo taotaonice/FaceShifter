@@ -14,7 +14,7 @@ import visdom
 
 
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
-batch_size = 6
+batch_size = 12
 lr_G = 1e-4
 lr_D = 1e-3
 max_epoch = 2000
