@@ -15,8 +15,8 @@ import visdom
 
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
 batch_size = 16
-lr_G = 1e-4
-lr_D = 3e-4
+lr_G = 3e-5
+lr_D = 1e-4
 max_epoch = 2000
 show_step = 10
 save_epoch = 1
@@ -28,6 +28,8 @@ device = torch.device('cuda')
 
 G = AEI_Net(c_id=512).to(device)
 D = MultiscaleDiscriminator(input_nc=3, norm_layer=torch.nn.InstanceNorm2d).to(device)
+G.train()
+D.train()
 
 arcface = Backbone(50, 0.6, 'ir_se').to(device)
 arcface.eval()
@@ -107,12 +109,11 @@ for epoch in range(0, max_epoch):
         opt_D.zero_grad()
         fake_score = D(Y.detach())[-1][0]
         true_score1 = D(Xs)[-1][0]
-        true_score2 = D(Xt)[-1][0]
+        # true_score2 = D(Xt)[-1][0]
 
         lossD = 0.5*(L1(torch.zeros_like(fake_score), fake_score) +
                      L1(true_score1, torch.ones_like(true_score1)))
                           
-
         with amp.scale_loss(lossD, opt_D) as scaled_loss:
             scaled_loss.backward()
         # lossD.backward()
