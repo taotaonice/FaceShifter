@@ -93,7 +93,7 @@ for epoch in range(0, max_epoch):
             L_attr += MSE(Xt_attr[i], Y_attr[i])
         L_attr /= 2.0
 
-        L_rec = torch.sum(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person)
+        L_rec = torch.mean(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person)
 
         lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
         # with amp.scale_loss(lossG, opt_G) as scaled_loss:
