@@ -15,7 +15,7 @@ import visdom
 
 vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
 batch_size = 16
-lr_G = 3e-5
+lr_G = 5e-5
 lr_D = 1e-4
 max_epoch = 2000
 show_step = 10
@@ -79,7 +79,7 @@ print(torch.backends.cudnn.benchmark)
 for epoch in range(0, max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
-        print(f'{iteration} / {len(dataloader)}')
+        print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         start_time = time.time()
         Xs, Xt, embed, same_person = data
         Xs = Xs.to(device)
@@ -99,7 +99,7 @@ for epoch in range(0, max_epoch):
             L_adv += hinge_loss(di[0], True)
 
         ZY = arcface(F.interpolate(Y, [112, 112], mode='bilinear', align_corners=True))
-        L_id = (1 - torch.cosine_similarity(embed, ZY, dim=1)).sum()
+        L_id = (1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
         Y_attr = G.get_attr(Y)
         L_attr = 0
@@ -107,7 +107,7 @@ for epoch in range(0, max_epoch):
             L_attr += MSE(Xt_attr[i], Y_attr[i])
         L_attr /= 2.0
 
-        L_rec = torch.sum(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person)
+        L_rec = torch.sum(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person) / same_person.sum()
 
         lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
@@ -142,6 +142,7 @@ for epoch in range(0, max_epoch):
             cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0])[:,:,::-1])
 
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
+        print(f'L_adv: {L_adv.item()} L_id: {L_id.item()} L_attr: {L_attr.item()} L_rec: {L_rec.item()}')
     torch.save(G.state_dict(), './saved_models/G_latest.pth')
     torch.save(D.state_dict(), './saved_models/D_latest.pth')
 
