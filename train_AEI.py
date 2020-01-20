@@ -27,7 +27,7 @@ device = torch.device('cuda')
 # torch.set_num_threads(12)
 
 G = AEI_Net(c_id=512).to(device)
-D = MultiscaleDiscriminator(input_nc=3, norm_layer=torch.nn.InstanceNorm2d).to(device)
+D = MultiscaleDiscriminator(input_nc=3, n_layers=9, norm_layer=torch.nn.InstanceNorm2d).to(device)
 G.train()
 D.train()
 
