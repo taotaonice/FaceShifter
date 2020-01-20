@@ -4,6 +4,17 @@ import torch.nn.functional as F
 from .AADLayer import *
 
 
+def weight_init(m):
+    if isinstance(m, nn.Linear):
+        m.weight.data.normal_(0, 0.001)
+        m.bias.data.zero_()
+    if isinstance(m, nn.Conv2d):
+        nn.init.xavier_normal_(m.weight.data)
+
+    if isinstance(m, nn.ConvTranspose2d):
+        nn.init.xavier_normal_(m.weight.data)
+
+
 def conv4x4(in_c, out_c, norm=nn.BatchNorm2d):
     return nn.Sequential(
         nn.Conv2d(in_channels=in_c, out_channels=out_c, kernel_size=4, stride=2, padding=1, bias=False),
@@ -44,6 +55,8 @@ class MLAttrEncoder(nn.Module):
         self.deconv5 = deconv4x4(256, 64)
         self.deconv6 = deconv4x4(128, 32)
 
+        self.apply(weight_init)
+
     def forward(self, Xt):
         feat1 = self.conv1(Xt)
         # 32x128x128
@@ -82,6 +95,8 @@ class AADGenerator(nn.Module):
         self.AADBlk6 = AAD_ResBlk(256, 128, 128, c_id)
         self.AADBlk7 = AAD_ResBlk(128, 64, 64, c_id)
         self.AADBlk8 = AAD_ResBlk(64, 3, 64, c_id)
+
+        self.apply(weight_init)
 
     def forward(self, z_attr, z_id):
         m = self.up1(z_id.reshape(z_id.shape[0], -1, 1, 1))
