@@ -123,7 +123,8 @@ class Backbone(Module):
                                        Dropout(drop_ratio),
                                        Flatten(),
                                        Linear(512 * 7 * 7, 512),
-                                       BatchNorm1d(512))
+                                       # BatchNorm1d(512))
+                                       )
         modules = []
         for block in blocks:
             for bottleneck in block:
@@ -137,7 +138,8 @@ class Backbone(Module):
         x = self.input_layer(x)
         x = self.body(x)
         x = self.output_layer(x)
-        return l2_norm(x)
+        # return l2_norm(x)
+        return x
 
 ##################################  MobileFaceNet #############################################################
     
