@@ -107,12 +107,11 @@ for epoch in range(0, max_epoch):
         opt_D.zero_grad()
         fake_score = D(Y.detach())[-1][0]
         true_score1 = D(Xs)[-1][0]
-        true_score2 = D(Xt)[-1][0]
+        # true_score2 = D(Xt)[-1][0]
 
         lossD = 0.5*(L1(torch.zeros_like(fake_score), fake_score) +
                      L1(true_score1, torch.ones_like(true_score1)))
                           
-
         with amp.scale_loss(lossD, opt_D) as scaled_loss:
             scaled_loss.backward()
         # lossD.backward()
