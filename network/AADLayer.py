@@ -66,7 +66,7 @@ class AAD_ResBlk(nn.Module):
         x = self.conv2(x)
 
         if self.cin != self.cout:
-            h, m3 = self.AAD3(h, z_attr, z_id)
+            h = self.AAD3(h, z_attr, z_id)
             h = self.relu3(h)
             h = self.conv3(h)
             x = x + h
