@@ -24,7 +24,7 @@ class FaceEmbed(TensorDataset):
         self.datasets = datasets
         self.embeds = embeds
         self.transforms = transforms.Compose([
-            transforms.ColorJitter(0.1, 0.1, 0.1, 0.03),
+            transforms.ColorJitter(0.1, 0.1, 0.1, 0.01),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
