@@ -13,9 +13,9 @@ from apex import amp
 import visdom
 
 
-vis = visdom.Visdom(server='49.235.201.74', env='faceshifter', port=8097)
+vis = visdom.Visdom(server='127.0.0.1', env='faceshifter', port=8099)
 batch_size = 16
-lr_G = 4e-4
+lr_G = 2e-4
 lr_D = 4e-4
 max_epoch = 2000
 show_step = 10
@@ -35,8 +35,9 @@ arcface = Backbone(50, 0.6, 'ir_se').to(device)
 arcface.eval()
 arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_location=device), strict=False)
 
-opt_G = optim.Adam(G.parameters(), lr=lr_G, weight_decay=1e-4)
-opt_D = optim.Adam(D.parameters(), lr=lr_D, weight_decay=1e-4)
+opt_G = optim.Adam(G.parameters(), lr=lr_G, betas=(0, 0.999), weight_decay=1e-4)
+opt_D = optim.Adam(D.parameters(), lr=lr_D, betas=(0, 0.999), weight_decay=1e-4)
+
 try:
     G.load_state_dict(torch.load('./saved_models/G_latest.pth', map_location=torch.device('cpu')), strict=False)
     D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')), strict=False)
@@ -61,7 +62,8 @@ def hinge_loss(X, positive=True):
 
 
 def get_numpy_image(X):
-    X = torchvision.utils.make_grid(X.detach().cpu(), nrow=batch_size).numpy() * 0.5 + 0.5
+    X = X[:8]
+    X = torchvision.utils.make_grid(X.detach().cpu(), nrow=X.shape[0]).numpy() * 0.5 + 0.5
     X = X.transpose([1,2,0])*255
     np.clip(X, 0, 255).astype(np.uint8)
     return X
@@ -79,9 +81,8 @@ print(torch.backends.cudnn.benchmark)
 for epoch in range(0, max_epoch):
     # torch.cuda.empty_cache()
     for iteration, data in enumerate(dataloader):
-        print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         start_time = time.time()
-        Xs, Xt, embed, same_person = data
+        Xs, Xt, _, same_person = data
         Xs = Xs.to(device)
         Xt = Xt.to(device)
         # embed = embed.to(device)
@@ -109,7 +110,7 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
+        lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
@@ -138,9 +139,9 @@ for epoch in range(0, max_epoch):
         batch_time = time.time() - start_time
         if iteration % show_step == 0:
             image = make_image(Xs, Xt, Y)
-            # vis.image(image, opts={'title': 'result'}, win='result')
+            vis.image(image, opts={'title': 'result'}, win='result')
             cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0])[:,:,::-1])
-
+        print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
         print(f'L_adv: {L_adv.item()} L_id: {L_id.item()} L_attr: {L_attr.item()} L_rec: {L_rec.item()}')
     torch.save(G.state_dict(), './saved_models/G_latest.pth')

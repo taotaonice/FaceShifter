@@ -9,13 +9,13 @@ class AADLayer(nn.Module):
         self.c_id = c_id
         self.c_x = c_x
 
-        self.conv1 = nn.Conv2d(attr_c, c_x, kernel_size=3, stride=1, padding=1, bias=False)
-        self.conv2 = nn.Conv2d(attr_c, c_x, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(attr_c, c_x, kernel_size=1, stride=1, padding=0, bias=True)
+        self.conv2 = nn.Conv2d(attr_c, c_x, kernel_size=1, stride=1, padding=0, bias=True)
         self.fc1 = nn.Linear(c_id, c_x)
         self.fc2 = nn.Linear(c_id, c_x)
-        self.norm = nn.InstanceNorm2d(c_x)
+        self.norm = nn.InstanceNorm2d(c_x, affine=False)
 
-        self.conv_h = nn.Conv2d(c_x, 1, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv_h = nn.Conv2d(c_x, c_x, kernel_size=1, stride=1, padding=0, bias=True)
 
     def forward(self, h_in, z_attr, z_id):
         # h_in cxnxn
