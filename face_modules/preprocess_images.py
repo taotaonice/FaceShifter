@@ -10,8 +10,8 @@ import os
 import libnvjpeg
 import pickle
 
-img_root_dir = '/home/taotao/Downloads/celeba-512/'
-save_path = '/home/taotao/Downloads/celeb-aligned-256/'
+img_root_dir = '/media/taotao/2T/ffhq/images1024x1024/'
+save_path = '/media/taotao/2T/ffhq/ffhq_aligned_256x256/'
 # embed_path = '/home/taotao/Downloads/celeb-aligned-256/embed.pkl'
 
 device = torch.device('cuda:0')
@@ -37,7 +37,7 @@ for root, dirs, files in os.walk(img_root_dir):
         if name.endswith('jpg') or name.endswith('png'):
             try:
                 p = os.path.join(root, name)
-                img = decoder.imread(p)
+                img = cv2.imread(p)
                 face = mtcnn.align(Image.fromarray(img[:, :, ::-1]), crop_size=(256, 256))
                 if face is None:
                     continue
