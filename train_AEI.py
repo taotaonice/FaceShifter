@@ -27,7 +27,7 @@ device = torch.device('cuda')
 # torch.set_num_threads(12)
 
 G = AEI_Net(c_id=512).to(device)
-D = MultiscaleDiscriminator(input_nc=3, n_layers=9, norm_layer=torch.nn.InstanceNorm2d).to(device)
+D = MultiscaleDiscriminator(input_nc=3, n_layers=3, norm_layer=torch.nn.InstanceNorm2d).to(device)
 G.train()
 D.train()
 
@@ -110,7 +110,7 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.pow(Y - Xt, 2).reshape(batch_size, -1).mean(dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
+        lossG = L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
@@ -119,6 +119,7 @@ for epoch in range(0, max_epoch):
 
         # train D
         opt_D.zero_grad()
+        Y, _ = G(Xt, embed)
         fake_D = D(Y.detach())
         loss_fake = 0
         for di in fake_D:
