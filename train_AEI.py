@@ -123,8 +123,8 @@ for epoch in range(0, max_epoch):
 
         # train D
         opt_D.zero_grad()
-        with torch.no_grad():
-            Y, _ = G(Xt, embed)
+        # with torch.no_grad():
+        #     Y, _ = G(Xt, embed)
         fake_D = D(Y.detach())
         loss_fake = 0
         for di in fake_D:

@@ -22,7 +22,7 @@ class FaceEmbed(TensorDataset):
             #     embed = pickle.load(f)
             #     embeds.append(embed)
         self.datasets = datasets
-        #self.embeds = embeds
+        # self.embeds = embeds
         self.transforms = transforms.Compose([
             transforms.ColorJitter(0.2, 0.2, 0.2, 0.01),
             transforms.ToTensor(),
@@ -36,7 +36,7 @@ class FaceEmbed(TensorDataset):
             idx += 1
         image_path = self.datasets[idx][item]
         name = os.path.split(image_path)[1]
-        #embed = self.embeds[idx][name]
+        # embed = self.embeds[idx][name]
         Xs = cv2.imread(image_path)[:, :, ::-1]
         Xs = Image.fromarray(Xs)
 
