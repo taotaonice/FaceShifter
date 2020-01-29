@@ -10,8 +10,8 @@ import os
 import libnvjpeg
 import pickle
 
-img_root_dir = '/media/taotao/2T/ffhq/images1024x1024/'
-save_path = '/media/taotao/2T/ffhq/ffhq_aligned_256x256/'
+img_root_dir = '/media/taotao/2T/vgg_face_dataset/'
+save_path = '/media/taotao/2T/vggface_aligned_256*256/'
 # embed_path = '/home/taotao/Downloads/celeb-aligned-256/embed.pkl'
 
 device = torch.device('cuda:0')
