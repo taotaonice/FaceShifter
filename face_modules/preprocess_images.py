@@ -10,8 +10,8 @@ import os
 import libnvjpeg
 import pickle
 
-img_root_dir = '/media/taotao/2T/vgg_face_dataset/'
-save_path = '/media/taotao/2T/vggface_aligned_256*256/'
+img_root_dir = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/chs_stars_512px/'
+save_path = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/star_256_0.85/'
 # embed_path = '/home/taotao/Downloads/celeb-aligned-256/embed.pkl'
 
 device = torch.device('cuda:0')

@@ -260,6 +260,7 @@ def warp_and_crop_face(src_img,
                                                         default_square)
 
     ref_pts = np.float32(reference_pts)
+    ref_pts = (ref_pts - 112/2)*0.85 + 112/2
     ref_pts *= crop_size[0]/112.
     ref_pts_shp = ref_pts.shape
     if max(ref_pts_shp) < 3 or min(ref_pts_shp) != 2:
