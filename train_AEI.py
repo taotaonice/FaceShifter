@@ -38,15 +38,16 @@ arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_locat
 opt_G = optim.Adam(G.parameters(), lr=lr_G, betas=(0, 0.999), weight_decay=1e-4)
 opt_D = optim.Adam(D.parameters(), lr=lr_D, betas=(0, 0.999), weight_decay=1e-4)
 
+G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
+D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
+
 try:
     G.load_state_dict(torch.load('./saved_models/G_latest.pth', map_location=torch.device('cpu')), strict=False)
     D.load_state_dict(torch.load('./saved_models/D_latest.pth', map_location=torch.device('cpu')), strict=False)
 except Exception as e:
     print(e)
-G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
-D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
 
-dataset = FaceEmbed(['../celeb-aligned-256/'])
+dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
 
@@ -87,10 +88,12 @@ for epoch in range(0, max_epoch):
         Xt = Xt.to(device)
         # embed = embed.to(device)
         with torch.no_grad():
-            embed = arcface(F.interpolate(Xs, [112, 112], mode='bilinear', align_corners=True))
+            embed = arcface(F.interpolate(Xs[:, :, 19:237, 19:237], [112, 112], mode='bilinear', align_corners=True))
         same_person = same_person.to(device)
         #diff_person = (1 - same_person)
         diff_person = torch.ones_like(same_person)
+        # test
+        same_person = diff_person
 
         # train G
         opt_G.zero_grad()
@@ -103,7 +106,11 @@ for epoch in range(0, max_epoch):
             L_adv += hinge_loss(di[0], True).mean(dim=[1, 2,3])
         L_adv = torch.sum(L_adv * diff_person) / (diff_person.sum() + 1e-4)
 
-        ZY = arcface(F.interpolate(Y, [112, 112], mode='bilinear', align_corners=True))
+        Y_aligned = Y[:, :, 19:237, 19:237]
+        forehead = Y_aligned[:, :, :50, :].detach()
+        down = Y_aligned[:, :, 50:, :]
+        Y_aligned = torch.cat((forehead, down), dim=2)
+        ZY = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
         Y_attr = G.get_attr(Y)
@@ -114,7 +121,7 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = 1*L_adv + 10*L_attr + 30*L_id + 10*L_rec
+        lossG = 1*L_adv + 10*L_attr + 20*L_id + 7*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
@@ -150,7 +157,8 @@ for epoch in range(0, max_epoch):
         print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
         print(f'L_adv: {L_adv.item()} L_id: {L_id.item()} L_attr: {L_attr.item()} L_rec: {L_rec.item()}')
-    torch.save(G.state_dict(), './saved_models/G_latest.pth')
-    torch.save(D.state_dict(), './saved_models/D_latest.pth')
+        if iteration % 2000 == 0:
+            torch.save(G.state_dict(), './saved_models/G_latest.pth')
+            torch.save(D.state_dict(), './saved_models/D_latest.pth')
 
 
