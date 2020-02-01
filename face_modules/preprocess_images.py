@@ -7,8 +7,8 @@ import PIL.Image as Image
 from model import Backbone, Arcface, MobileFaceNet, Am_softmax, l2_norm
 from torchvision import transforms as trans
 import os
-import libnvjpeg
-import pickle
+# import libnvjpeg
+# import pickle
 
 img_root_dir = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/part1/'
 save_path = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/stars_256_0.85/'
@@ -27,7 +27,7 @@ test_transform = trans.Compose([
     trans.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
 ])
 
-decoder = libnvjpeg.py_NVJpegDecoder()
+# decoder = libnvjpeg.py_NVJpegDecoder()
 
 ind = 0
 embed_map = {}
