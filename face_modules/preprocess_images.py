@@ -10,8 +10,8 @@ import os
 import libnvjpeg
 import pickle
 
-img_root_dir = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/chs_stars_512px/'
-save_path = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/star_256_0.85/'
+img_root_dir = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/part1/'
+save_path = '/media/taotao/958c7d2d-c4ce-4117-a93b-c8a7aa4b88e3/taotao/stars_256_0.85/'
 # embed_path = '/home/taotao/Downloads/celeb-aligned-256/embed.pkl'
 
 device = torch.device('cuda:0')
@@ -38,16 +38,17 @@ for root, dirs, files in os.walk(img_root_dir):
             try:
                 p = os.path.join(root, name)
                 img = cv2.imread(p)
-                face = mtcnn.align(Image.fromarray(img[:, :, ::-1]), crop_size=(256, 256))
-                if face is None:
+                faces = mtcnn.align_multi(Image.fromarray(img[:, :, ::-1]), min_face_size=64, crop_size=(256, 256))
+                if len(faces) == 0:
                     continue
-                # scaled_img = face.resize((112, 112), Image.ANTIALIAS)
-                # with torch.no_grad():
-                #     embed = model(test_transform(scaled_img).unsqueeze(0).cuda()).squeeze().cpu().numpy()
-                new_path = '%08d.jpg'%ind
-                ind += 1
-                print(new_path)
-                face.save(os.path.join(save_path, new_path))
+                for face in faces:
+                    # scaled_img = face.resize((112, 112), Image.ANTIALIAS)
+                    # with torch.no_grad():
+                    #     embed = model(test_transform(scaled_img).unsqueeze(0).cuda()).squeeze().cpu().numpy()
+                    new_path = '%08d.jpg'%ind
+                    ind += 1
+                    print(new_path)
+                    face.save(os.path.join(save_path, new_path))
                 # embed_map[new_path] = embed.detach().cpu()
             except Exception as e:
                 continue
