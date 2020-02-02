@@ -51,7 +51,7 @@ except Exception as e:
 
 if not fine_tune_with_identity:
     dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
-else
+else:
     dataset = With_Identity('', 0.8)
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
