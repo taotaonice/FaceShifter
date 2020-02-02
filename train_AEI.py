@@ -1,6 +1,6 @@
 from network.AEI_Net import *
 from network.MultiscaleDiscriminator import *
-from utils.Dataset import FaceEmbed
+from utils.Dataset import FaceEmbed, With_Identity
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from face_modules.model import Backbone, Arcface, MobileFaceNet, Am_softmax, l2_norm
@@ -22,6 +22,8 @@ show_step = 10
 save_epoch = 1
 model_save_path = './saved_models/'
 optim_level = 'O1'
+
+fine_tune_with_identity = True
 
 device = torch.device('cuda')
 # torch.set_num_threads(12)
@@ -47,7 +49,11 @@ try:
 except Exception as e:
     print(e)
 
-dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
+if not fine_tune_with_identity:
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
+else
+    dataset = With_Identity('', 0.8)
+
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
 

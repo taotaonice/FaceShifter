@@ -52,3 +52,38 @@ class FaceEmbed(TensorDataset):
 
     def __len__(self):
         return sum(self.N)
+
+
+class With_Identity(TensorDataset):
+    def __init__(self, root_path, same_prob=0.8):
+        self.root_path = root_path
+        self.same_prob = same_prob
+        self.classes = os.listdir(root_path)
+        self.transforms = transforms.Compose([
+            transforms.ColorJitter(0.1, 0.1, 0.1, 0.01),
+            transforms.Resize(256),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
+    def __getitem__(self, item):
+        class_path = os.path.join(self.root_path, self.classes[item])
+        files = glob.glob(class_path + '/*.*g')
+        N = len(files)
+        order = [i for i in range(N)]
+        random.shuffle(order)
+        Xs = Image.fromarray(cv2.imread(files[order[0]])[:, :, ::-1])
+        if random.random() < self.same_prob:
+            Xt = Image.fromarray(cv2.imread(files[order[1]])[:, :, ::-1])
+            return self.transforms(Xs), self.transforms(Xt), True
+        else:
+            other_class = random.randint(0, self.__len__()-1)
+            class_path = os.path.join(self.root_path,
+                                      self.classes[other_class])
+            files = glob.glob(class_path + '/*.*g')
+            pick = random.choice(files)
+            Xt = Image.fromarray(cv2.imread(pick)[:, :, ::-1])
+            return self.transforms(Xs), self.transforms(Xt), False
+
+    def __len__(self):
+        return len(self.classes)
