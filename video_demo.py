@@ -45,7 +45,11 @@ for file in files:
     Xt_path = file
     # Xt_path = '/home/taotao/Pictures/u=3977885541,1855342996&fm=11&gp=0.jpg'
     Xt_raw = cv2.imread(Xt_path)
-    Xt = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256))
+    try:
+        Xt = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256))
+    except Exception as e:
+        print('skip one frame')
+
     if Xt is None:
         continue
 
