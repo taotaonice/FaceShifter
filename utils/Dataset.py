@@ -61,7 +61,7 @@ class With_Identity(TensorDataset):
         self.classes = os.listdir(root_path)
         self.transforms = transforms.Compose([
             transforms.ColorJitter(0.1, 0.1, 0.1, 0.01),
-            transforms.Resize(256),
+            transforms.Resize((256, 256)),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
