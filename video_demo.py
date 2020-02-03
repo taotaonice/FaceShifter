@@ -10,6 +10,7 @@ import cv2
 import PIL.Image as Image
 import numpy as np
 import glob
+import time
 
 detector = MTCNN()
 device = torch.device('cuda')
@@ -27,7 +28,7 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-Xs_path = '/home/taotao/Pictures/timg.jpeg'
+Xs_path = '/home/taotao/Pictures/u=3805093532,3256891027&fm=26&gp=0.jpg'
 Xs_raw = cv2.imread(Xs_path)
 Xs = detector.align(Image.fromarray(Xs_raw[:, :, ::-1]), crop_size=(256, 256))
 Xs_raw = np.array(Xs)[:, :, ::-1]
@@ -63,7 +64,10 @@ for file in files:
     with torch.no_grad():
         # embeds = arcface(F.interpolate(Xs[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
         # embedt = arcface(F.interpolate(Xt[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
+        st = time.time()
         Yt, _ = G(Xt, embeds)
+        st = time.time() - st
+        print(f'inference time: {st} sec')
         # Ys, _ = G(Xs, embedt)
         # Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
         Yt = Yt.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5

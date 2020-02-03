@@ -60,6 +60,7 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worker
 MSE = torch.nn.MSELoss()
 L1 = torch.nn.L1Loss()
 
+prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255.).to(device)
 
 def hinge_loss(X, positive=True):
     if positive:
@@ -112,10 +113,10 @@ for epoch in range(0, max_epoch):
             L_adv += hinge_loss(di[0], True).mean(dim=[1, 2,3])
         L_adv = torch.sum(L_adv * diff_person) / (diff_person.sum() + 1e-4)
 
-        Y_aligned = Y[:, :, 19:237, 19:237]
-        forehead = Y_aligned[:, :, :50, :].detach()
-        down = Y_aligned[:, :, 50:, :]
-        Y_aligned = torch.cat((forehead, down), dim=2)
+        Y_aligned = (Y*prior + Xt*(1-prior))[:, :, 19:237, 19:237]
+        # forehead = Y_aligned[:, :, :50, :].detach()
+        # down = Y_aligned[:, :, 50:, :]
+        # Y_aligned = torch.cat((forehead, down), dim=2)
         ZY = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
