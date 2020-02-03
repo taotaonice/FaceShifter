@@ -23,7 +23,7 @@ save_epoch = 1
 model_save_path = './saved_models/'
 optim_level = 'O1'
 
-fine_tune_with_identity = False
+fine_tune_with_identity = True
 
 device = torch.device('cuda')
 # torch.set_num_threads(12)
@@ -50,9 +50,9 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
 else:
-    dataset = With_Identity('../washed_img/', 0.8)
+    dataset = With_Identity('', 0.8)
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
@@ -60,7 +60,6 @@ dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worker
 MSE = torch.nn.MSELoss()
 L1 = torch.nn.L1Loss()
 
-prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255.).to(device)
 
 def hinge_loss(X, positive=True):
     if positive:
@@ -113,10 +112,10 @@ for epoch in range(0, max_epoch):
             L_adv += hinge_loss(di[0], True).mean(dim=[1, 2,3])
         L_adv = torch.sum(L_adv * diff_person) / (diff_person.sum() + 1e-4)
 
-        Y_aligned = (Y*prior + Xt*(1-prior))[:, :, 19:237, 19:237]
-        # forehead = Y_aligned[:, :, :50, :].detach()
-        # down = Y_aligned[:, :, 50:, :]
-        # Y_aligned = torch.cat((forehead, down), dim=2)
+        Y_aligned = Y[:, :, 19:237, 19:237]
+        forehead = Y_aligned[:, :, :50, :].detach()
+        down = Y_aligned[:, :, 50:, :]
+        Y_aligned = torch.cat((forehead, down), dim=2)
         ZY = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
@@ -129,7 +128,6 @@ for epoch in range(0, max_epoch):
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
         lossG = 1*L_adv + 10*L_attr + 20*L_id + 7*L_rec
-        # lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
