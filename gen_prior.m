@@ -13,7 +13,7 @@ g =  double(bw);
 
 % m = imgaussfilt(g, 21, 'filtersize', 51);
 
-se = strel('disk', 70);
+se = strel('disk', 50);
 d = imdilate(g, se);
 d = imgaussfilt(d, 41, 'filtersize', 111);
 subplot 121

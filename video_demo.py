@@ -28,7 +28,7 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-Xs_path = '/home/taotao/Pictures/u=3805093532,3256891027&fm=26&gp=0.jpg'
+Xs_path = '/home/taotao/Pictures/u=3322705847,3022779128&fm=26&gp=0.jpg'
 Xs_raw = cv2.imread(Xs_path)
 Xs = detector.align(Image.fromarray(Xs_raw[:, :, ::-1]), crop_size=(256, 256))
 Xs_raw = np.array(Xs)[:, :, ::-1]
