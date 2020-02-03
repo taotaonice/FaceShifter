@@ -74,6 +74,10 @@ class With_Identity(TensorDataset):
         random.shuffle(order)
         Xs = Image.fromarray(cv2.imread(files[order[0]])[:, :, ::-1])
         if random.random() < self.same_prob:
+            if len(order) == 1:
+                order.append(order[0])
+            if random.random() < 0.5:
+                order[1] = order[0]
             Xt = Image.fromarray(cv2.imread(files[order[1]])[:, :, ::-1])
             return self.transforms(Xs), self.transforms(Xt), True
         else:
