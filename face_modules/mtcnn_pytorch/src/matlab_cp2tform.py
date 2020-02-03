@@ -257,8 +257,9 @@ def get_similarity_transform_for_cv2(src_pts, dst_pts, reflective=True):
     """
     trans, trans_inv = get_similarity_transform(src_pts, dst_pts, reflective)
     cv2_trans = cvt_tform_mat_for_cv2(trans)
+    cv2_trans_inv = cvt_tform_mat_for_cv2(trans_inv)
 
-    return cv2_trans
+    return cv2_trans, cv2_trans_inv
 
 
 if __name__ == '__main__':

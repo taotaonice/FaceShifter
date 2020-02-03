@@ -211,7 +211,7 @@ def warp_and_crop_face(src_img,
                        facial_pts,
                        reference_pts=None,
                        crop_size=(96, 112),
-                       align_type='smilarity'):
+                       align_type='smilarity', return_trans_inv=False):
     """
     Function:
     ----------
@@ -293,7 +293,7 @@ def warp_and_crop_face(src_img,
         tfm = get_affine_transform_matrix(src_pts, ref_pts)
 #        #print(('get_affine_transform_matrix() returns tfm=\n' + str(tfm))
     else:
-        tfm = get_similarity_transform_for_cv2(src_pts, ref_pts)
+        tfm, tfm_inv = get_similarity_transform_for_cv2(src_pts, ref_pts)
 #        #print(('get_similarity_transform_for_cv2() returns tfm=\n' + str(tfm))
 
 #    #print('--->Transform matrix: '
@@ -303,4 +303,8 @@ def warp_and_crop_face(src_img,
 
     face_img = cv2.warpAffine(src_img, tfm, (crop_size[0], crop_size[1]))
 
-    return face_img
+    if return_trans_inv:
+        return face_img, tfm_inv
+    else:
+        return face_img
+

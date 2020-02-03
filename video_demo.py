@@ -46,14 +46,16 @@ for file in files:
     # Xt_path = '/home/taotao/Pictures/u=3977885541,1855342996&fm=11&gp=0.jpg'
     Xt_raw = cv2.imread(Xt_path)
     try:
-        Xt = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256))
+        Xt, trans_inv = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256), return_trans_inv=True)
     except Exception as e:
         print('skip one frame')
+        continue
 
     if Xt is None:
         continue
 
-    Xt_raw = np.array(Xt)[:, :, ::-1]
+    # Xt_raw = np.array(Xt)[:, :, ::-1]
+    Xt_raw = Xt_raw.astype(np.float)/255.0
 
     Xt = test_transform(Xt)
 
@@ -66,7 +68,13 @@ for file in files:
         # Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
         Yt = Yt.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
         Yt = Yt[:, :, ::-1]
-        merge = np.concatenate((Xt_raw.astype(np.float)/255., Yt), axis=1)
+        Yt_trans_inv = cv2.warpAffine(Yt, trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
+        mask = (Yt_trans_inv > 0).astype(np.float)
+        mask = cv2.GaussianBlur(mask, (11, 11), 3)
+        mask = (mask > 0.95)
+        Yt_trans_inv = mask*Yt_trans_inv + (1-mask)*Xt_raw
+
+        merge = np.concatenate((Xt_raw, Yt_trans_inv), axis=1)
 
         cv2.imshow('image', merge)
         cv2.imwrite('./write/%06d.jpg'%ind, merge*255)
