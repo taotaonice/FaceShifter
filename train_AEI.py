@@ -23,7 +23,7 @@ save_epoch = 1
 model_save_path = './saved_models/'
 optim_level = 'O1'
 
-fine_tune_with_identity = True
+fine_tune_with_identity = False
 
 device = torch.device('cuda')
 # torch.set_num_threads(12)
@@ -50,7 +50,7 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/'], same_prob=0.5)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
 else:
     dataset = With_Identity('', 0.8)
 
