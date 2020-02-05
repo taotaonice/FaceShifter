@@ -50,9 +50,9 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.8)
 else:
-    dataset = With_Identity('', 0.8)
+    dataset = With_Identity('../washed_img/', 0.8)
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
@@ -99,7 +99,7 @@ for epoch in range(0, max_epoch):
         #diff_person = (1 - same_person)
         diff_person = torch.ones_like(same_person)
         # test
-        same_person = diff_person
+        # same_person = diff_person
 
         # train G
         opt_G.zero_grad()
@@ -113,9 +113,9 @@ for epoch in range(0, max_epoch):
         L_adv = torch.sum(L_adv * diff_person) / (diff_person.sum() + 1e-4)
 
         Y_aligned = Y[:, :, 19:237, 19:237]
-        forehead = Y_aligned[:, :, :50, :].detach()
-        down = Y_aligned[:, :, 50:, :]
-        Y_aligned = torch.cat((forehead, down), dim=2)
+        # forehead = Y_aligned[:, :, :50, :].detach()
+        # down = Y_aligned[:, :, 50:, :]
+        # Y_aligned = torch.cat((forehead, down), dim=2)
         ZY = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
 
@@ -127,7 +127,8 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = 1*L_adv + 10*L_attr + 20*L_id + 7*L_rec
+        # lossG = 1*L_adv + 10*L_attr + 15*L_id + 7*L_rec
+        lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
