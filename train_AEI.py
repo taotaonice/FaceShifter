@@ -29,7 +29,7 @@ device = torch.device('cuda')
 # torch.set_num_threads(12)
 
 G = AEI_Net(c_id=512).to(device)
-D = MultiscaleDiscriminator(input_nc=3, n_layers=5, norm_layer=torch.nn.InstanceNorm2d).to(device)
+D = MultiscaleDiscriminator(input_nc=3, n_layers=6, norm_layer=torch.nn.InstanceNorm2d).to(device)
 G.train()
 D.train()
 
@@ -37,8 +37,8 @@ arcface = Backbone(50, 0.6, 'ir_se').to(device)
 arcface.eval()
 arcface.load_state_dict(torch.load('./face_modules/model_ir_se50.pth', map_location=device), strict=False)
 
-opt_G = optim.Adam(G.parameters(), lr=lr_G, betas=(0, 0.999), weight_decay=1e-4)
-opt_D = optim.Adam(D.parameters(), lr=lr_D, betas=(0, 0.999), weight_decay=1e-4)
+opt_G = optim.Adam(G.parameters(), lr=lr_G, betas=(0, 0.999))
+opt_D = optim.Adam(D.parameters(), lr=lr_D, betas=(0, 0.999))
 
 G, opt_G = amp.initialize(G, opt_G, opt_level=optim_level)
 D, opt_D = amp.initialize(D, opt_D, opt_level=optim_level)
@@ -50,7 +50,7 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.8)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
 else:
     dataset = With_Identity('../washed_img/', 0.8)
 
@@ -99,7 +99,7 @@ for epoch in range(0, max_epoch):
         #diff_person = (1 - same_person)
         diff_person = torch.ones_like(same_person)
         # test
-        # same_person = diff_person
+        same_person = diff_person
 
         # train G
         opt_G.zero_grad()
@@ -127,8 +127,8 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        # lossG = 1*L_adv + 10*L_attr + 15*L_id + 7*L_rec
-        lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
+        lossG = 1*L_adv + 10*L_attr + 15*L_id + 10*L_rec
+        # lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
 
@@ -164,7 +164,7 @@ for epoch in range(0, max_epoch):
         print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
         print(f'L_adv: {L_adv.item()} L_id: {L_id.item()} L_attr: {L_attr.item()} L_rec: {L_rec.item()}')
-        if iteration % 2000 == 0:
+        if iteration % 1000 == 0:
             torch.save(G.state_dict(), './saved_models/G_latest.pth')
             torch.save(D.state_dict(), './saved_models/D_latest.pth')
 
