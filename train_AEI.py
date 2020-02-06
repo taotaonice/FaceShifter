@@ -83,6 +83,8 @@ def make_image(Xs, Xt, Y):
     return np.concatenate((Xs, Xt, Y), axis=0).transpose([2, 0, 1])
 
 
+prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255).to(device)
+
 print(torch.backends.cudnn.benchmark)
 #torch.backends.cudnn.benchmark = True
 for epoch in range(0, max_epoch):
