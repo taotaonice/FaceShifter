@@ -56,7 +56,8 @@ for Xs_raw in Xs_raws:
         continue
 Xses = torch.cat(Xses, dim=0)
 with torch.no_grad():
-    embeds = arcface(F.interpolate(Xses[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True)).mean(dim=0, keepdim=True)
+    embeds, Xs_feats = arcface(F.interpolate(Xses[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
+    embeds = embeds.mean(dim=0, keepdim=True)
 
 
 files = glob.glob('./tmp/3/*.*g')
