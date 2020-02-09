@@ -50,7 +50,7 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.3)
 else:
     dataset = With_Identity('../washed_img/', 0.8)
 
@@ -83,7 +83,7 @@ def make_image(Xs, Xt, Y):
     return np.concatenate((Xs, Xt, Y), axis=0).transpose([2, 0, 1])
 
 
-prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255).to(device)
+# prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255).to(device)
 
 print(torch.backends.cudnn.benchmark)
 #torch.backends.cudnn.benchmark = True
@@ -120,8 +120,8 @@ for epoch in range(0, max_epoch):
         # Y_aligned = torch.cat((forehead, down), dim=2)
         ZY, Y_feats = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
-        for idx in range(len(Y_feats)):
-            L_id += L1(Xs_feats[idx], Y_feats[idx]) * 1e-2
+        for idx in range(15, len(Y_feats)):
+            L_id += L1(Xs_feats[idx], Y_feats[idx]) * 1e-1
 
         Y_attr = G.get_attr(Y)
         L_attr = 0
@@ -131,7 +131,7 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = 1*L_adv + 10*L_attr + 15*L_id + 10*L_rec
+        lossG = 1*L_adv + 10*L_attr + 15*L_id + 15*L_rec
         # lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
