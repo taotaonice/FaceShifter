@@ -22,7 +22,7 @@ class MTCNN():
     def align(self, img, crop_size=(112, 112), return_trans_inv=False):
         _, landmarks = self.detect_faces(img)
         if len(landmarks) == 0:
-            return None
+            return None if not return_trans_inv else (None, None)
         facial5points = [[landmarks[0][j],landmarks[0][j+5]] for j in range(5)]
         warped_face = warp_and_crop_face(np.array(img), facial5points, self.refrence, crop_size=crop_size,
                                          return_trans_inv=return_trans_inv)
@@ -30,7 +30,50 @@ class MTCNN():
             return Image.fromarray(warped_face[0]), warped_face[1]
         else:
             return Image.fromarray(warped_face)
-    
+
+    def align_fully(self, img, crop_size=(112, 112), return_trans_inv=False, ori=[0, 1, 3], fast_mode=True):
+        ori_size = img.copy()
+        h = img.size[1]
+        w = img.size[0]
+        sw = 320. if fast_mode else w
+        scale = sw / w
+        img = img.resize((int(w*scale), int(h*scale)))
+        candi = []
+        for i in ori:
+            if len(candi) > 0:
+                break
+            if i > 0:
+                rimg = img.transpose(i+1)
+            else:
+                rimg = img
+            box, landmarks = self.detect_faces(rimg, min_face_size=sw/10, thresholds=[0.6, 0.7, 0.7])
+            landmarks /= scale
+            if len(landmarks) == 0:
+                continue
+            if i == 0:
+                f5p = [[landmarks[0][j], landmarks[0][j + 5]] for j in range(5)]
+            elif i == 1:
+                f5p = [[w-1-landmarks[0][j+5], landmarks[0][j]] for j in range(5)]
+            elif i == 2:
+                f5p = [[w-1-landmarks[0][j], h-1-landmarks[0][j+5]] for j in range(5)]
+            elif i == 3:
+                f5p = [[landmarks[0][j + 5], h-1-landmarks[0][j]] for j in range(5)]
+            candi.append((box[0][4], f5p))
+        if len(candi) == 0:
+            return None if not return_trans_inv else (None, None)
+        while len(candi) > 1:
+            if candi[0][0] > candi[1][0]:
+                del candi[1]
+            else:
+                del candi[0]
+        facial5points = candi[0][1]
+        warped_face = warp_and_crop_face(np.array(ori_size), facial5points, self.refrence, crop_size=crop_size,
+                                         return_trans_inv=return_trans_inv)
+        if return_trans_inv:
+            return Image.fromarray(warped_face[0]), warped_face[1]
+        else:
+            return Image.fromarray(warped_face)
+
     def align_multi(self, img, limit=None, min_face_size=64.0, crop_size=(112, 112)):
         boxes, landmarks = self.detect_faces(img, min_face_size)
         if len(landmarks) == 0:
@@ -96,6 +139,8 @@ class MTCNN():
 
             # collect boxes (and offsets, and scores) from different scales
             bounding_boxes = [i for i in bounding_boxes if i is not None]
+            if len(bounding_boxes) == 0:
+                return np.zeros([0]), np.zeros([0])
             bounding_boxes = np.vstack(bounding_boxes)
 
             keep = nms(bounding_boxes[:, 0:5], nms_thresholds[0])
@@ -131,8 +176,8 @@ class MTCNN():
             # STAGE 3
 
             img_boxes = get_image_boxes(bounding_boxes, image, size=48)
-            if len(img_boxes) == 0: 
-                return [], []
+            if len(img_boxes) == 0:
+                return np.zeros([0]), np.zeros([0])
             img_boxes = torch.FloatTensor(img_boxes).to(device)
             output = self.onet(img_boxes)
             landmarks = output[0].cpu().data.numpy()  # shape [n_boxes, 10]

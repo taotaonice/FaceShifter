@@ -12,6 +12,46 @@ import numpy as np
 import glob
 import time
 
+from Xlib import display, X
+
+
+class Screen_Capture:
+    def __init__(self, H, W):
+        self.H = H
+        self.W = W
+        self.dsp = display.Display()
+        self.root = self.dsp.screen().root
+        self.actw = self.dsp.intern_atom('_NET_ACTIVE_WINDOW')
+        self.ids = []
+
+    def read_frame(self):
+        # W = self.W
+        # H = self.H
+        id = self.root.get_full_property(self.actw, X.AnyPropertyType).value[0]
+        if len(self.ids) == 0:
+            self.ids.append(id)
+            return np.zeros([1,1,3]).astype(np.uint8)
+        elif len(self.ids) == 1:
+            if id == self.ids[0]:
+                return np.zeros([1,1,3]).astype(np.uint8)
+            else:
+                self.ids.append(id)
+        elif len(self.ids) == 2:
+            if id != self.ids[1]:
+                self.ids[0] = self.ids[1]
+                self.ids[1] = id
+        id = self.ids[0]
+        focus = self.dsp.create_resource_object('window', id)
+        geo = focus.get_geometry()
+        H = geo.height
+        W = geo.width
+        raw = focus.get_image(0, 0, W, H, X.ZPixmap, 0xffffffff)
+        image = Image.frombytes("RGB", (W, H), raw.data, "raw", "BGRX")
+        return np.array(image)
+
+
+screen_capture = Screen_Capture(1080, 960)
+
 detector = MTCNN()
 device = torch.device('cuda')
 G = AEI_Net(c_id=512)
@@ -29,20 +69,8 @@ test_transform = transforms.Compose([
 ])
 
 jjy = glob.glob('/home/taotao/jjy/*.*g')
-yy = glob.glob('/home/taotao/yy/*.*g')
-dlrb = glob.glob('/home/taotao/dlrb/*.*g')
-wsq = ['/home/taotao/Pictures/_-2022699153__-1119499174_1580813720175_1580813720000_wifi_0_1580813837000.jpg', '/home/taotao/Pictures/1580813775628.jpeg']
-ew = ['/home/taotao/Pictures/u=670719782,34416986&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=1509480533,2094244881&fm=26&gp=0.jpg']
-fj = ['/home/taotao/Pictures/u=2213259300,1999166607&fm=26&gp=0.jpg']
-ty = ['/home/taotao/Pictures/u=2926637442,3350514777&fm=26&gp=0.jpg']
-tly = ['/home/taotao/Pictures/u=3216638246,2194008022&fm=26&gp=0.jpg']
-ft = ['/home/taotao/Pictures/b03533fa828ba61ebe7db556bb17ce0f314e59e4.png', '/home/taotao/Pictures/b999a9014c086e06eaeb811975825df20bd1cbb6.jpeg']
-alt = ['/home/taotao/Pictures/20190224235052_8154c3a8b1961200d86bfc7b74edc0f4_2_mwpm_03200403.jpg']
-ycy = ['/home/taotao/Pictures/u=1341915507,1137570584&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=1608176690,2383619727&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=2262852619,3494679591&fm=11&gp=0.jpg', '/home/taotao/Pictures/u=3194463926,4053253650&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=3482871913,2597348063&fm=26&gp=0.jpg']
-lax = glob.glob('/home/taotao/Pictures/Screenshot from 2020-02-06*.png')
-wsq.append('/home/taotao/Pictures/201526204015.jpg')
 
-Xs_paths = wsq
+Xs_paths = jjy
 Xs_raws = [cv2.imread(Xs_path) for Xs_path in Xs_paths]
 Xses = []
 for Xs_raw in Xs_raws:
@@ -71,18 +99,36 @@ for i in range(256):
         dist = np.minimum(dist, 1)
         mask[i, j] = 1-dist
 mask = cv2.dilate(mask, None, iterations=40)
-for file in files[000:]:
-    print(file)
-    Xt_path = file
-    # Xt_path = '/home/taotao/Pictures/u=3977885541,1855342996&fm=11&gp=0.jpg'
-    Xt_raw = cv2.imread(Xt_path)
+# for file in files[0:]:
+#     print(file)
+#     Xt_path = file
+#     Xt_raw = cv2.imread(Xt_path)
+cv2.namedWindow('image')#, cv2.WND_PROP_FULLSCREEN)
+cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+cv2.moveWindow('image', 0, 0)
+while True:
     try:
-        Xt, trans_inv = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256), return_trans_inv=True)
-    except Exception as e:
-        print('skip one frame')
+        Xt_raw = screen_capture.read_frame()[:,:,::-1]
+    except:
         continue
+    # try:
+    Xt, trans_inv = detector.align_fully(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256),
+                                         return_trans_inv=True, ori=[0,1,3])
+    # except Exception as e:
+    #     print(e)
+    #     print('skip one frame')
+    #     cv2.imshow('image', Xt_raw)
+    #     cv2.imwrite('./write/%06d.jpg'%ind, Xt_raw)
+    #     ind += 1
+    #     cv2.waitKey(1)
+    #     continue
 
     if Xt is None:
+        cv2.imshow('image', Xt_raw)
+        # cv2.imwrite('./write/%06d.jpg'%ind, Xt_raw)
+        ind += 1
+        cv2.waitKey(1)
+        print('skip one frame')
         continue
 
     # Xt_raw = np.array(Xt)[:, :, ::-1]
@@ -114,6 +160,6 @@ for file in files[000:]:
         merge = Yt_trans_inv
 
         cv2.imshow('image', merge)
-        cv2.imwrite('./write/%06d.jpg'%ind, merge*255)
+        # cv2.imwrite('./write/%06d.jpg'%ind, merge*255)
         ind += 1
         cv2.waitKey(1)
