@@ -69,6 +69,18 @@ test_transform = transforms.Compose([
 ])
 
 jjy = glob.glob('/home/taotao/jjy/*.*g')
+yy = glob.glob('/home/taotao/yy/*.*g')
+dlrb = glob.glob('/home/taotao/dlrb/*.*g')
+fj = ['/home/taotao/fj/00105490.jpg', '/home/taotao/fj/00105494.jpg', '/home/taotao/fj/00105502.jpg']#glob.glob('/home/taotao/fj/*.*g')
+wsq = ['/home/taotao/Pictures/_-2022699153__-1119499174_1580813720175_1580813720000_wifi_0_1580813837000.jpg', '/home/taotao/Pictures/1580813775628.jpeg']
+ew = ['/home/taotao/Pictures/u=670719782,34416986&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=1509480533,2094244881&fm=26&gp=0.jpg']
+ty = ['/home/taotao/Pictures/u=2926637442,3350514777&fm=26&gp=0.jpg']
+tly = ['/home/taotao/Pictures/u=3216638246,2194008022&fm=26&gp=0.jpg']
+ft = ['/home/taotao/Pictures/b03533fa828ba61ebe7db556bb17ce0f314e59e4.png', '/home/taotao/Pictures/b999a9014c086e06eaeb811975825df20bd1cbb6.jpeg']
+alt = ['/home/taotao/Pictures/20190224235052_8154c3a8b1961200d86bfc7b74edc0f4_2_mwpm_03200403.jpg']
+ycy = ['/home/taotao/Pictures/u=1341915507,1137570584&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=1608176690,2383619727&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=2262852619,3494679591&fm=11&gp=0.jpg', '/home/taotao/Pictures/u=3194463926,4053253650&fm=26&gp=0.jpg', '/home/taotao/Pictures/u=3482871913,2597348063&fm=26&gp=0.jpg']
+lax = glob.glob('/home/taotao/Pictures/Screenshot from 2020-02-06*.png')
+wsq.append('/home/taotao/Pictures/201526204015.jpg')
 
 Xs_paths = jjy
 Xs_raws = [cv2.imread(Xs_path) for Xs_path in Xs_paths]
