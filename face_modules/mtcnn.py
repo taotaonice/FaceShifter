@@ -89,6 +89,60 @@ class MTCNN():
         # return boxes, faces
         return faces
 
+    def get_landmarks(self, img, min_face_size=32, crop_size=(256, 256), fast_mode=False, ori=[0,1,3]):
+        ori_size = img.copy()
+        h = img.size[1]
+        w = img.size[0]
+        sw = 640. if fast_mode else w
+        scale = sw / w
+        img = img.resize((int(w*scale), int(h*scale)))
+        min_face_size = min_face_size if not fast_mode else sw/20
+        candi = []
+        boxes = np.zeros([0, 5])
+        for i in ori:
+            if i > 0:
+                rimg = img.transpose(i+1)
+            else:
+                rimg = img
+            box, landmarks = self.detect_faces(rimg, min_face_size=min_face_size, thresholds=[0.6, 0.7, 0.7])
+            landmarks /= scale
+            if len(landmarks) == 0:
+                continue
+            if i == 0:
+                f5p = [[landmarks[0][j], landmarks[0][j + 5]] for j in range(5)]
+            elif i == 1:
+                f5p = [[w-1-landmarks[0][j+5], landmarks[0][j]] for j in range(5)]
+                x1 = w-1-box[:, 1]
+                y1 = box[:, 0]
+                x2 = w-1-box[:, 3]
+                y2 = box[:, 2]
+                box[:, :4] = np.stack((x2, y1,  x1, y2), axis=1)
+            elif i == 2:
+                f5p = [[w-1-landmarks[0][j], h-1-landmarks[0][j+5]] for j in range(5)]
+                x1 = w-1-box[:, 0]
+                y1 = h-1-box[:, 1]
+                x2 = w-1-box[:, 2]
+                y2 = h-1-box[:, 3]
+                box[:, :4] = np.stack((x2, y2,  x1, y1), axis=1)
+            elif i == 3:
+                f5p = [[landmarks[0][j + 5], h-1-landmarks[0][j]] for j in range(5)]
+                x1 = box[:, 1]
+                y1 = h-1-box[:, 0]
+                x2 = box[:, 3]
+                y2 = h-1-box[:, 2]
+                box[:, :4] = np.stack((x1, y2, x2, y1), axis=1)
+            candi.append(f5p)
+            boxes = np.concatenate((boxes, box), axis=0)
+        # pick = nms(boxes)
+        faces = []
+        for idx, facial5points in enumerate(candi):
+            # if idx not in pick:
+            #     continue
+            warped_face = warp_and_crop_face(np.array(ori_size), facial5points, self.refrence, crop_size=crop_size,
+                                             return_trans_inv=False)
+            faces.append((warped_face, facial5points))
+        return faces
+
     def detect_faces(self, image, min_face_size=64.0,
                      thresholds=[0.6, 0.7, 0.8],
                      nms_thresholds=[0.7, 0.7, 0.7]):

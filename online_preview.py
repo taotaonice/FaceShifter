@@ -82,7 +82,7 @@ ycy = ['/home/taotao/Pictures/u=1341915507,1137570584&fm=26&gp=0.jpg', '/home/ta
 lax = glob.glob('/home/taotao/Pictures/Screenshot from 2020-02-06*.png')
 wsq.append('/home/taotao/Pictures/201526204015.jpg')
 
-Xs_paths = jjy
+Xs_paths = fj
 Xs_raws = [cv2.imread(Xs_path) for Xs_path in Xs_paths]
 Xses = []
 for Xs_raw in Xs_raws:
