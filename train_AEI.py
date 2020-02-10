@@ -50,7 +50,7 @@ except Exception as e:
     print(e)
 
 if not fine_tune_with_identity:
-    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.3)
+    dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
 else:
     dataset = With_Identity('../washed_img/', 0.8)
 
