@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./face_modules/')
+sys.path.append('../')
 import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
