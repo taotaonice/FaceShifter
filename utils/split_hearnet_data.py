@@ -14,7 +14,7 @@ import time
 import os
 
 
-output_path = '/home/taotao/Documents/hearnet_data/'
+output_path = '~/hearnet_data/'
 os.makedirs(output_path, exist_ok=True)
 
 
@@ -43,7 +43,7 @@ for data_root in data_roots:
 scores = []
 
 with torch.no_grad():
-    for idx, img_path in enumerate(all_lists[1:2000]):
+    for idx, img_path in enumerate(all_lists):
         print(f'{idx} / {len(all_lists)}')
         img = cv2.imread(img_path)[:,:,::-1]
         X = Image.fromarray(img)
