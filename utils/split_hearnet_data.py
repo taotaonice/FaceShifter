@@ -45,7 +45,7 @@ scores = []
 torch.backends.cudnn.benchmark = True
 G = G.half()
 with torch.no_grad():
-    for idx in range(0, len(all_lists), batch_size):
+    for idx in range(0, len(all_lists)-batch_size, batch_size):
         st = time.time()
         
         Xl = []
