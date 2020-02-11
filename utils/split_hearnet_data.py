@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./face_modules/')
+sys.path.append('../')
 import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
@@ -14,9 +14,10 @@ import time
 import os
 
 
-output_path = '/home/taotao/Documents/hearnet_data/'
+output_path = '~/hearnet_data/'
 os.makedirs(output_path, exist_ok=True)
 
+batch_size = 2
 
 device = torch.device('cuda')
 G = AEI_Net(c_id=512)
@@ -43,16 +44,22 @@ for data_root in data_roots:
 scores = []
 
 with torch.no_grad():
-    for idx, img_path in enumerate(all_lists[1:2000]):
+    for idx in range(0, len(all_lists), batch_size):
         print(f'{idx} / {len(all_lists)}')
-        img = cv2.imread(img_path)[:,:,::-1]
-        X = Image.fromarray(img)
-        X = test_transform(X)
-        X = X.unsqueeze(0).cuda()
+        Xl = []
+        for i in range(batch_size):
+            img_path = all_lists[idx + i]
+            img = cv2.imread(img_path)[:,:,::-1]
+            X = Image.fromarray(img)
+            X = test_transform(X)
+            X = X.unsqueeze(0)
+            Xl.append(X)
+        X = torch.cat(Xl, dim=0).cuda()
         embeds, _ = arcface(F.interpolate(X[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
         Yt, _ = G(X, embeds)
-        HE = torch.abs(X - Yt).mean()
-        scores.append((img_path, HE.item()))
+        HE = torch.abs(X - Yt).mean(dim=[1,2,3])
+        for i in range(batch_size):
+            scores.append((all_lists[idx + i], HE[i].item()))
 
 
     def comp(x):
