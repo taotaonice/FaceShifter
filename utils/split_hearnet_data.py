@@ -17,7 +17,7 @@ import os
 output_path = '~/hearnet_data/'
 os.makedirs(output_path, exist_ok=True)
 
-batch_size = 2
+batch_size = 32
 
 device = torch.device('cuda')
 G = AEI_Net(c_id=512)
@@ -42,10 +42,12 @@ for data_root in data_roots:
     all_lists.extend(img_lists)
 
 scores = []
-
+torch.backends.cudnn.benchmark = True
+G = G.half()
 with torch.no_grad():
     for idx in range(0, len(all_lists), batch_size):
-        print(f'{idx} / {len(all_lists)}')
+        st = time.time()
+        
         Xl = []
         for i in range(batch_size):
             img_path = all_lists[idx + i]
@@ -56,10 +58,13 @@ with torch.no_grad():
             Xl.append(X)
         X = torch.cat(Xl, dim=0).cuda()
         embeds, _ = arcface(F.interpolate(X[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
-        Yt, _ = G(X, embeds)
+        Yt, _ = G(X.half(), embeds.half())
+        Yt = Yt.float()
         HE = torch.abs(X - Yt).mean(dim=[1,2,3])
         for i in range(batch_size):
             scores.append((all_lists[idx + i], HE[i].item()))
+        st = time.time() - st
+        print(f'{idx} / {len(all_lists)}    time: {st}')
 
 
     def comp(x):
