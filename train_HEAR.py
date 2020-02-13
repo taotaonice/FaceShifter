@@ -15,7 +15,7 @@ import visdom
 
 
 vis = visdom.Visdom(server='127.0.0.1', env='faceshifter', port=8099)
-batch_size = 8
+batch_size = 32
 lr = 4e-4
 max_epoch = 2000
 show_step = 10
@@ -46,9 +46,9 @@ try:
 except Exception as e:
     print(e)
 
-dataset = AugmentedOcclusions('/home/taotao/Downloads/hearnet_data',
-                              ['/home/taotao/Documents/ego_hands_png'],
-                              ['/home/taotao/Documents/shapenet_png'], same_prob=0.5)
+dataset = AugmentedOcclusions('../hearnet_data',
+                              ['../ego_hands_png'],
+                              ['../shapenet_png'], same_prob=0.5)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
 MSE = torch.nn.MSELoss()
@@ -113,8 +113,8 @@ for epoch in range(0, max_epoch):
         batch_time = time.time() - start_time
         if iteration % show_step == 0:
             image = make_image(Xs, Xt, Yst)
-            vis.image(image, opts={'title': 'result'}, win='result')
-            cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0])[:,:,::-1])
+            vis.image(image, opts={'title': 'HEAR'}, win='HEAR')
+            cv2.imwrite('./gen_images/HEAR_latest.jpg', image.transpose([1,2,0])[:,:,::-1])
         print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         print(f'loss: {loss.item()} batch_time: {batch_time}s')
         print(f'L_id: {L_id.item()} L_chg: {L_chg.item()} L_rec: {L_rec.item()}')
