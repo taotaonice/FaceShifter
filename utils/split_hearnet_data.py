@@ -12,9 +12,10 @@ import numpy as np
 import glob
 import time
 import os
+import shutil
 
 
-output_path = '~/hearnet_data/'
+output_path = '../../hearnet_data/'
 os.makedirs(output_path, exist_ok=True)
 
 batch_size = 32
@@ -79,7 +80,7 @@ with torch.no_grad():
     ind = 0
     print('copying files...')
     for img_path, _ in scores:
-        os.system(f'cp {img_path} {output_path}/%08d.jpg'%ind)
+        shutil.copyfile(img_path, output_path+'/%08d.jpg' % ind)
         ind += 1
         # test bug
         # img = cv2.imread(img_path)[:, :, ::-1]

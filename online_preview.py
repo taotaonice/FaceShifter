@@ -98,7 +98,7 @@ for i in range(256):
         dist = np.sqrt((i-128)**2 + (j-128)**2)/128
         dist = np.minimum(dist, 1)
         mask[i, j] = 1-dist
-mask = cv2.dilate(mask, None, iterations=40)
+mask = cv2.dilate(mask, None, iterations=30)
 # for file in files[0:]:
 #     print(file)
 #     Xt_path = file

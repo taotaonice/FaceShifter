@@ -51,4 +51,4 @@ class HearNet(nn.Module):
 
         out = nn.functional.interpolate(m4, scale_factor=2, mode='bilinear', align_corners=True)
         out = self.up5(out)
-        return out
+        return torch.tanh(out)
