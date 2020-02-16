@@ -18,29 +18,28 @@ __global__ void restore_kernel(uchar* ret, const float* Yst, const float* mask,
             continue;
         }
 
-        float weight[4];
         float xp = sx - (int)sx;
         float yp = sy - (int)sy;
-        weight[0] = (xp+yp)*0.25;
-        weight[1] = (1-xp+yp)*0.25;
-        weight[2] = (xp+1-yp)*0.25;
-        weight[3] = (1-xp+1-yp)*0.25;
         float color[3] = {0};
         for(int i=0;i<3;i++){
-            float c = Yst[i*H*W + (int)(sy)*W + (int)(sx)]*0.5+0.5;
-            color[i] += c * weight[0];
-            c = Yst[i*H*W + (int)(sy)*W + (int)(sx+1)]*0.5+0.5;
-            color[i] += c * weight[1];
-            c = Yst[i*H*W + (int)(sy+1)*W + (int)(sx)]*0.5+0.5;
-            color[i] += c * weight[2];
-            c = Yst[i*H*W + (int)(sy+1)*W + (int)(sx+1)]*0.5+0.5;
-            color[i] += c * weight[3];
+            float v = 0;
+            float a = Yst[i*H*W + int(sy)*W + (int)(sx)];
+            float b = Yst[i*H*W + int(sy)*W + (int)(sx+1)];
+            float c = Yst[i*H*W + int(sy+1)*W + (int)(sx)];
+            float d = Yst[i*H*W + int(sy+1)*W + (int)(sx+1)];
+            float x1 = a + (b-a)*xp; float x2 = c + (d-c)*xp;
+            v = x1 + (x2-x1)*yp;
+            color[i] = v * 0.5 + 0.5;
         }
         float alpha = 0;
-        alpha += weight[0] * mask[(int)(sy)*W + (int)(sx)];
-        alpha += weight[1] * mask[(int)(sy)*W + (int)(sx+1)];
-        alpha += weight[2] * mask[(int)(sy+1)*W + (int)(sx)];
-        alpha += weight[3] * mask[(int)(sy+1)*W + (int)(sx+1)];
+        {
+            float a = mask[(int)(sy)*W + (int)(sx)];
+            float b = mask[(int)(sy)*W + (int)(sx+1)];
+            float c = mask[(int)(sy+1)*W + (int)(sx)];
+            float d = mask[(int)(sy+1)*W + (int)(sx+1)];
+            float x1 = a + (b-a)*xp; float x2 = c + (d-c)*xp;
+            alpha = x1 + (x2-x1)*yp;
+        }
 
         for(int i=0;i<3;i++){
             float c = color[2-i]*255*alpha + Xt[tid*3+(2-i)]*(1-alpha);
