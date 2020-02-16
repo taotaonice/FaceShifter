@@ -11,9 +11,9 @@ __global__ void restore_kernel(uchar* ret, const float* Yst, const float* mask,
         float sx = x*trans[0] + y*trans[1] + trans[2];
         float sy = x*trans[3] + y*trans[4] + trans[5];
         if (sx < 0 || sy < 0 || sx >= W-1 || sy >= H-1){
-            ret[tid*3+0] = Xt[tid*3+2];
+            ret[tid*3+0] = Xt[tid*3+0];
             ret[tid*3+1] = Xt[tid*3+1];
-            ret[tid*3+2] = Xt[tid*3+0];
+            ret[tid*3+2] = Xt[tid*3+2];
             tid += offset;
             continue;
         }
@@ -42,7 +42,7 @@ __global__ void restore_kernel(uchar* ret, const float* Yst, const float* mask,
         }
 
         for(int i=0;i<3;i++){
-            float c = color[2-i]*255*alpha + Xt[tid*3+(2-i)]*(1-alpha);
+            float c = color[i]*255*alpha + Xt[tid*3+(i)]*(1-alpha);
             c = c < 0 ? 0 : c;
             c = c > 255 ? 255 : c;
             ret[tid*3+i] = c;

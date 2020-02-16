@@ -67,18 +67,18 @@ fj0 = '/home/taotao/fj/00105490.jpg'
 fj1 = '/home/taotao/fj/00105566.jpg'
 fj2 = '/home/taotao/fj/00105548.jpg'
 
-A_path = '/home/taotao/Pictures/_-2022699153__-1119499174_1580813720175_1580813720000_wifi_0_1580813837000.jpg'
-B_path = '/home/taotao/Pictures/1580813775628.jpeg'
+A_path = dn0
+B_path = ft0
 faces = [cv2.imread(A_path), cv2.imread(B_path)]
 
 emb = []
 feats = []
 for face in faces:
-    Xs_raw = face[:, :, ::-1]
+    Xs_raw = face
     _, landmarks, _ = facer.run(Xs_raw)
     f5p = get_f5p(landmarks[0])
     Xs = warp_and_crop_face(Xs_raw, f5p, reference_pts=get_reference_facial_points(default_square=True), crop_size=(256, 256))
-    cv2.imshow("", Xs[:, :, ::-1])
+    cv2.imshow("", Xs)
     cv2.waitKey(0)
     Xs = Image.fromarray(Xs)
     Xs = test_transform(Xs)
