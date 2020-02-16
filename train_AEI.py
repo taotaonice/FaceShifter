@@ -53,7 +53,7 @@ except Exception as e:
     # dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
 # else:
     # dataset = With_Identity('../washed_img/', 0.8)
-dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.5)
+dataset = FaceEmbed(['../celeb-aligned-256_0.85/', '../ffhq_256_0.85/', '../vgg_256_0.85/', '../stars_256_0.85/'], same_prob=0.8)
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
@@ -69,19 +69,17 @@ def hinge_loss(X, positive=True):
         return torch.relu(X+1)
 
 
-def get_numpy_image(X):
+def get_grid_image(X):
     X = X[:8]
-    X = torchvision.utils.make_grid(X.detach().cpu(), nrow=X.shape[0]).numpy() * 0.5 + 0.5
-    X = X.transpose([1,2,0])*255
-    np.clip(X, 0, 255).astype(np.uint8)
+    X = torchvision.utils.make_grid(X.detach().cpu(), nrow=X.shape[0]) * 0.5 + 0.5
     return X
 
 
 def make_image(Xs, Xt, Y):
-    Xs = get_numpy_image(Xs)
-    Xt = get_numpy_image(Xt)
-    Y = get_numpy_image(Y)
-    return np.concatenate((Xs, Xt, Y), axis=0).transpose([2, 0, 1])
+    Xs = get_grid_image(Xs)
+    Xt = get_grid_image(Xt)
+    Y = get_grid_image(Y)
+    return torch.cat((Xs, Xt, Y), dim=1).numpy()
 
 
 # prior = torch.FloatTensor(cv2.imread('./prior.png', 0).astype(np.float)/255).to(device)
@@ -124,7 +122,7 @@ for epoch in range(0, max_epoch):
 
         L_rec = torch.sum(0.5 * torch.mean(torch.pow(Y - Xt, 2).reshape(batch_size, -1), dim=1) * same_person) / (same_person.sum() + 1e-6)
 
-        lossG = 1*L_adv + 10*L_attr + 15*L_id + 15*L_rec
+        lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         # lossG = 1*L_adv + 10*L_attr + 5*L_id + 10*L_rec
         with amp.scale_loss(lossG, opt_G) as scaled_loss:
             scaled_loss.backward()
@@ -139,12 +137,12 @@ for epoch in range(0, max_epoch):
         fake_D = D(Y.detach())
         loss_fake = 0
         for di in fake_D:
-            loss_fake += torch.sum(hinge_loss(di[0], False).mean(dim=[1, 2,3]) * diff_person) / (diff_person.sum() + 1e-4)
+            loss_fake += torch.sum(hinge_loss(di[0], False).mean(dim=[1, 2,3])).mean()
 
         true_D = D(Xs)
         loss_true = 0
         for di in true_D:
-            loss_true += torch.sum(hinge_loss(di[0], True).mean(dim=[1, 2,3]) * diff_person) / (diff_person.sum() + 1e-4)
+            loss_true += torch.sum(hinge_loss(di[0], True).mean(dim=[1, 2,3])).mean()
         # true_score2 = D(Xt)[-1][0]
 
         lossD = 0.5*(loss_true.mean() + loss_fake.mean())
@@ -156,8 +154,8 @@ for epoch in range(0, max_epoch):
         batch_time = time.time() - start_time
         if iteration % show_step == 0:
             image = make_image(Xs, Xt, Y)
-            vis.image(image, opts={'title': 'result'}, win='result')
-            cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0])[:,:,::-1])
+            vis.image(image[::-1, :, :], opts={'title': 'result'}, win='result')
+            cv2.imwrite('./gen_images/latest.jpg', image.transpose([1,2,0]))
         print(f'epoch: {epoch}    {iteration} / {len(dataloader)}')
         print(f'lossD: {lossD.item()}    lossG: {lossG.item()} batch_time: {batch_time}s')
         print(f'L_adv: {L_adv.item()} L_id: {L_id.item()} L_attr: {L_attr.item()} L_rec: {L_rec.item()}')
