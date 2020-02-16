@@ -164,7 +164,7 @@ class AugmentedOcclusions(TensorDataset):
         face_path = self.face_img_paths[item]
         face_img = cv2.imread(face_path)
 
-        Xs = compose_occlusion(face_img, self.gen_occlusion())
+        Xs = face_img
         p = random.random()
         if p > self.same_prob:
             Xt_path = self.face_img_paths[random.randint(0, len(self.face_img_paths)-1)]
@@ -172,7 +172,7 @@ class AugmentedOcclusions(TensorDataset):
             Xt = compose_occlusion(Xt, self.gen_occlusion())
             same_person = 0
         else:
-            Xt = Xs.copy()
+            Xt = compose_occlusion(face_img, self.gen_occlusion())
             same_person = 1
         return self.transforms(Image.fromarray(Xs[:, :, ::-1])), self.transforms(Image.fromarray(Xt[:, :, ::-1])), same_person
 
