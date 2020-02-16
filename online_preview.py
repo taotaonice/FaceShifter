@@ -92,8 +92,8 @@ with torch.no_grad():
     embeds = embeds.mean(dim=0, keepdim=True)
 
 
-files = glob.glob('./tmp/3/*.*g')
-files.sort()
+# files = glob.glob('./tmp/3/*.*g')
+# files.sort()
 ind = 0
 
 mask = np.zeros([256, 256], dtype=np.float)
