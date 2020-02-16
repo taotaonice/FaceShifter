@@ -14,6 +14,10 @@ import time
 
 from Xlib import display, X
 
+use_cuda_postprocess = True
+if use_cuda_postprocess:
+    from cuda_postprocess import CudaPostprocess
+    postprocesser = CudaPostprocess(256, 256)
 
 class Screen_Capture:
     def __init__(self, H, W):
@@ -108,11 +112,11 @@ cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cv2.moveWindow('image', 0, 0)
 while True:
     try:
-        Xt_raw = screen_capture.read_frame()[:,:,::-1]
+        Xt_raw = screen_capture.read_frame()
     except:
         continue
     # try:
-    Xt, trans_inv = detector.align_fully(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256),
+    Xt, trans_inv = detector.align_fully(Image.fromarray(Xt_raw), crop_size=(256, 256),
                                          return_trans_inv=True, ori=[0,3,1])
     # except Exception as e:
     #     print(e)
@@ -124,7 +128,7 @@ while True:
     #     continue
 
     if Xt is None:
-        cv2.imshow('image', Xt_raw)
+        cv2.imshow('image', Xt_raw[:,:,::-1])
         # cv2.imwrite('./write/%06d.jpg'%ind, Xt_raw)
         ind += 1
         cv2.waitKey(1)
@@ -132,7 +136,7 @@ while True:
         continue
 
     # Xt_raw = np.array(Xt)[:, :, ::-1]
-    Xt_raw = Xt_raw.astype(np.float)/255.0
+    # Xt_raw = Xt_raw.astype(np.float)/255.0
 
     Xt = test_transform(Xt)
 
@@ -142,21 +146,24 @@ while True:
         # embedt = arcface(F.interpolate(Xt[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
         st = time.time()
         Yt, _ = G(Xt, embeds)
+        Yt = Yt.squeeze().detach().cpu().numpy()
         st = time.time() - st
         print(f'inference time: {st} sec')
         # Ys, _ = G(Xs, embedt)
         # Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
-        Yt = Yt.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
-        Yt = Yt[:, :, ::-1]
-        Yt_trans_inv = cv2.warpAffine(Yt, trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
-        mask_ = cv2.warpAffine(mask,trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
-        mask_ = np.expand_dims(mask_, 2)
-        # mask = (Yt_trans_inv > 0).astype(np.float)
-        # mask = cv2.GaussianBlur(mask, (11, 11), 3)
-        # mask = (mask > 0.95)
-        Yt_trans_inv = mask_*Yt_trans_inv + (1-mask_)*Xt_raw
+        if not use_cuda_postprocess:
+            Yt = Yt.transpose([1, 2, 0])*0.5 + 0.5
+            Yt = Yt[:, :, ::-1]
+            Yt_trans_inv = cv2.warpAffine(Yt, trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
+            mask_ = cv2.warpAffine(mask,trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
+            mask_ = np.expand_dims(mask_, 2)
+            Yt_trans_inv = mask_*Yt_trans_inv + (1-mask_)*(Xt_raw[:,:,::-1].astype(np.float)/255.)
+        else:
+            trans_inv = np.concatenate((trans_inv, np.array([0,0,1]).reshape(1, 3)), axis=0)
+            trans = np.linalg.inv(trans_inv)
+            trans = trans[:2, :]
+            Yt_trans_inv = postprocesser.restore(Yt.copy(), mask, trans.copy(), Xt_raw, np.size(Xt_raw, 0), np.size(Xt_raw, 1))
 
-        # merge = np.concatenate((Xt_raw, Yt_trans_inv), axis=1)
         merge = Yt_trans_inv
 
         cv2.imshow('image', merge)
