@@ -64,9 +64,9 @@ L1 = torch.nn.L1Loss()
 
 def hinge_loss(X, positive=True):
     if positive:
-        return torch.relu(1-X)
+        return torch.relu(1-X).mean()
     else:
-        return torch.relu(X+1)
+        return torch.relu(X+1).mean()
 
 
 def get_grid_image(X):
@@ -107,8 +107,8 @@ for epoch in range(0, max_epoch):
         L_adv = 0
 
         for di in Di:
-            L_adv += hinge_loss(di[0], True).mean(dim=[1, 2,3])
-        L_adv = torch.sum(L_adv).mean()
+            L_adv += hinge_loss(di[0], True)
+        
 
         Y_aligned = Y[:, :, 19:237, 19:237]
         ZY, Y_feats = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
@@ -137,12 +137,12 @@ for epoch in range(0, max_epoch):
         fake_D = D(Y.detach())
         loss_fake = 0
         for di in fake_D:
-            loss_fake += torch.sum(hinge_loss(di[0], False).mean(dim=[1, 2,3])).mean()
+            loss_fake += hinge_loss(di[0], False)
 
         true_D = D(Xs)
         loss_true = 0
         for di in true_D:
-            loss_true += torch.sum(hinge_loss(di[0], True).mean(dim=[1, 2,3])).mean()
+            loss_true += hinge_loss(di[0], True)
         # true_score2 = D(Xt)[-1][0]
 
         lossD = 0.5*(loss_true.mean() + loss_fake.mean())
