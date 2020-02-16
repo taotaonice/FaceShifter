@@ -79,8 +79,7 @@ Xs_raws = [cv2.imread(Xs_path) for Xs_path in Xs_paths]
 Xses = []
 for Xs_raw in Xs_raws:
     try:
-        Xs = detector.align(Image.fromarray(Xs_raw[:, :, ::-1]), crop_size=(256, 256))
-        # Xs_raw = np.array(Xs)[:, :, ::-1]
+        Xs = detector.align(Image.fromarray(Xs_raw), crop_size=(256, 256))
         Xs = test_transform(Xs)
         Xs = Xs.unsqueeze(0).cuda()
         Xses.append(Xs)
@@ -113,6 +112,7 @@ cv2.moveWindow('image', 0, 0)
 while True:
     try:
         Xt_raw = screen_capture.read_frame()
+        Xt_raw = cv2.cvtColor(Xt_raw, cv2.COLOR_RGB2BGR)
     except:
         continue
     # try:
@@ -128,7 +128,7 @@ while True:
     #     continue
 
     if Xt is None:
-        cv2.imshow('image', Xt_raw[:,:,::-1])
+        cv2.imshow('image', Xt_raw)
         # cv2.imwrite('./write/%06d.jpg'%ind, Xt_raw)
         ind += 1
         cv2.waitKey(1)
@@ -153,11 +153,11 @@ while True:
         # Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
         if not use_cuda_postprocess:
             Yt = Yt.transpose([1, 2, 0])*0.5 + 0.5
-            Yt = Yt[:, :, ::-1]
+            Yt = Yt
             Yt_trans_inv = cv2.warpAffine(Yt, trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
             mask_ = cv2.warpAffine(mask,trans_inv, (np.size(Xt_raw, 1), np.size(Xt_raw, 0)), borderValue=(0, 0, 0))
             mask_ = np.expand_dims(mask_, 2)
-            Yt_trans_inv = mask_*Yt_trans_inv + (1-mask_)*(Xt_raw[:,:,::-1].astype(np.float)/255.)
+            Yt_trans_inv = mask_*Yt_trans_inv + (1-mask_)*(Xt_raw.astype(np.float)/255.)
         else:
             trans_inv = np.concatenate((trans_inv, np.array([0,0,1]).reshape(1, 3)), axis=0)
             trans = np.linalg.inv(trans_inv)

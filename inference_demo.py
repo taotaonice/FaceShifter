@@ -31,11 +31,11 @@ Xt_path = '/home/taotao/Pictures/u=3977885541,1855342996&fm=11&gp=0.jpg'
 
 Xs_raw = cv2.imread(Xs_path)
 Xt_raw = cv2.imread(Xt_path)
-Xs = detector.align(Image.fromarray(Xs_raw[:, :, ::-1]), crop_size=(256, 256))
-Xt = detector.align(Image.fromarray(Xt_raw[:, :, ::-1]), crop_size=(256, 256))
+Xs = detector.align(Image.fromarray(Xs_raw), crop_size=(256, 256))
+Xt = detector.align(Image.fromarray(Xt_raw), crop_size=(256, 256))
 
-Xs_raw = np.array(Xs)[:, :, ::-1]
-Xt_raw = np.array(Xt)[:, :, ::-1]
+Xs_raw = np.array(Xs)
+Xt_raw = np.array(Xt)
 
 Xs = test_transform(Xs)
 Xt = test_transform(Xt)
@@ -50,7 +50,7 @@ with torch.no_grad():
     Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
     Yt = Yt.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5
 
-    Y = np.concatenate((Ys[:, :, ::-1], Yt[:, :, ::-1]), axis=1)
+    Y = np.concatenate((Ys, Yt), axis=1)
     X = np.concatenate((Xs_raw/255., Xt_raw/255.), axis=1)
     image = np.concatenate((X, Y), axis=0)
     cv2.imshow('image', image)

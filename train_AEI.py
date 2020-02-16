@@ -100,29 +100,21 @@ for epoch in range(0, max_epoch):
             embed, Xs_feats = arcface(F.interpolate(Xs[:, :, 19:237, 19:237], [112, 112], mode='bilinear', align_corners=True))
         same_person = same_person.to(device)
         #diff_person = (1 - same_person)
-        diff_person = torch.ones_like(same_person)
-        # test
-        same_person = diff_person
 
         # train G
         opt_G.zero_grad()
         Y, Xt_attr = G(Xt, embed)
 
-        Di = D(Y)#[-1][0]
+        Di = D(Y)
         L_adv = 0
 
         for di in Di:
             L_adv += hinge_loss(di[0], True).mean(dim=[1, 2,3])
-        L_adv = torch.sum(L_adv * diff_person) / (diff_person.sum() + 1e-4)
+        L_adv = torch.sum(L_adv).mean()
 
         Y_aligned = Y[:, :, 19:237, 19:237]
-        # forehead = Y_aligned[:, :, :50, :].detach()
-        # down = Y_aligned[:, :, 50:, :]
-        # Y_aligned = torch.cat((forehead, down), dim=2)
         ZY, Y_feats = arcface(F.interpolate(Y_aligned, [112, 112], mode='bilinear', align_corners=True))
         L_id =(1 - torch.cosine_similarity(embed, ZY, dim=1)).mean()
-        for idx in range(15, len(Y_feats)):
-            L_id += L1(Xs_feats[idx], Y_feats[idx]) * 1e-1
 
         Y_attr = G.get_attr(Y)
         L_attr = 0

@@ -38,12 +38,12 @@ class FaceEmbed(TensorDataset):
         image_path = self.datasets[idx][item]
         name = os.path.split(image_path)[1]
         # embed = self.embeds[idx][name]
-        Xs = cv2.imread(image_path)[:, :, ::-1]
+        Xs = cv2.imread(image_path)
         Xs = Image.fromarray(Xs)
 
         if random.random() > self.same_prob:
             image_path = random.choice(self.datasets[random.randint(0, len(self.datasets)-1)])
-            Xt = cv2.imread(image_path)[:, :, ::-1]
+            Xt = cv2.imread(image_path)
             Xt = Image.fromarray(Xt)
             same_person = 0
         else:
@@ -74,13 +74,13 @@ class With_Identity(TensorDataset):
         N = len(files)
         order = [i for i in range(N)]
         random.shuffle(order)
-        Xs = Image.fromarray(cv2.imread(files[order[0]])[:, :, ::-1])
+        Xs = Image.fromarray(cv2.imread(files[order[0]]))
         if random.random() < self.same_prob:
             if len(order) == 1:
                 order.append(order[0])
             if random.random() < 0.5:
                 order[1] = order[0]
-            Xt = Image.fromarray(cv2.imread(files[order[1]])[:, :, ::-1])
+            Xt = Image.fromarray(cv2.imread(files[order[1]]))
             return self.transforms(Xs), self.transforms(Xt), True
         else:
             other_class = random.randint(0, self.__len__()-1)
@@ -88,7 +88,7 @@ class With_Identity(TensorDataset):
                                       self.classes[other_class])
             files = glob.glob(class_path + '/*.*g')
             pick = random.choice(files)
-            Xt = Image.fromarray(cv2.imread(pick)[:, :, ::-1])
+            Xt = Image.fromarray(cv2.imread(pick))
             return self.transforms(Xs), self.transforms(Xt), False
 
     def __len__(self):
@@ -174,7 +174,7 @@ class AugmentedOcclusions(TensorDataset):
         else:
             Xt = compose_occlusion(face_img, self.gen_occlusion())
             same_person = 1
-        return self.transforms(Image.fromarray(Xs[:, :, ::-1])), self.transforms(Image.fromarray(Xt[:, :, ::-1])), same_person
+        return self.transforms(Image.fromarray(Xs)), self.transforms(Image.fromarray(Xt)), same_person
 
     def __len__(self):
         return len(self.face_img_paths)
