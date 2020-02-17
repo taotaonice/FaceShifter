@@ -43,8 +43,8 @@ Xt = test_transform(Xt)
 Xs = Xs.unsqueeze(0).cuda()
 Xt = Xt.unsqueeze(0).cuda()
 with torch.no_grad():
-    embeds = arcface(F.interpolate(Xs[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
-    embedt = arcface(F.interpolate(Xt[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
+    embeds, _ = arcface(F.interpolate(Xs[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
+    embedt, __ = arcface(F.interpolate(Xt[:, :, 19:237, 19:237], (112, 112), mode='bilinear', align_corners=True))
     Yt, _ = G(Xt, embeds)
     Ys, _ = G(Xs, embedt)
     Ys = Ys.squeeze().detach().cpu().numpy().transpose([1, 2, 0])*0.5 + 0.5

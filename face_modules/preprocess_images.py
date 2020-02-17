@@ -38,7 +38,7 @@ for root, dirs, files in os.walk(img_root_dir):
             try:
                 p = os.path.join(root, name)
                 img = cv2.imread(p)
-                faces = mtcnn.align_multi(Image.fromarray(img[:, :, ::-1]), min_face_size=64, crop_size=(256, 256))
+                faces = mtcnn.align_multi(Image.fromarray(img), min_face_size=64, crop_size=(256, 256))
                 if len(faces) == 0:
                     continue
                 for face in faces:
