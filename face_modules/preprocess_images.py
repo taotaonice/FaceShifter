@@ -37,7 +37,7 @@ for root, dirs, files in os.walk(img_root_dir):
         if name.endswith('jpg') or name.endswith('png'):
             try:
                 p = os.path.join(root, name)
-                img = cv2.imread(p)
+                img = cv2.imread(p)[:, :, ::-1]
                 faces = mtcnn.align_multi(Image.fromarray(img), min_face_size=64, crop_size=(256, 256))
                 if len(faces) == 0:
                     continue
